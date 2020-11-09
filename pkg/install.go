@@ -1,4 +1,4 @@
-package magex
+package pkg
 
 import (
 	"log"

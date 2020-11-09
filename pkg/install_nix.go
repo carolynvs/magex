@@ -1,6 +1,6 @@
 // +build !windows
 
-package magex
+package pkg
 
 import (
 	"go/build"

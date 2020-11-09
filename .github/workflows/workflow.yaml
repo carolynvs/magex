@@ -9,4 +9,8 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.1'
-      - run: go test ./...
+      - name: Run Mage
+        uses: magefile/mage-action@v1
+        with:
+          version: latest
+          args: test

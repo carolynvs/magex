@@ -1,5 +1,7 @@
 # Magefile Extensions
 
+![test](https://github.com/carolynvs/magex/workflows/test/badge.svg)
+
 This library provides helper methods to use with [mage](https://magefile.org).
 
 Below is a sample of the type of helpers available. Full examples and

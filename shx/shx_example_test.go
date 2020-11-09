@@ -10,8 +10,8 @@ import (
 )
 
 func ExampleInDir() {
-	// Run `go get -u github.com/gobuffalo/packr/v2/packr2/cmd` in /tmp
-	pkg := "github.com/gobuffalo/packr/v2/packr2/cmd"
+	// Run `go get -u github.com/gobuffalo/packr/v2/packr2` in /tmp
+	pkg := "github.com/gobuffalo/packr/v2/packr2"
 	err := shx.InDir(os.TempDir(), func() error {
 		return sh.Run("go", "get", "-u", pkg)
 	})

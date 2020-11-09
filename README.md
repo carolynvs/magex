@@ -20,7 +20,7 @@ import (
 // Install packr2 v2.8.0 if it's not available, and ensure it's in PATH.
 func Packr2() error {
     if magex.IsCommandAvailable("packr2") {
-        err := magex.EnsurePackage("github.com/gobuffalo/packr/v2/packr2/cmd", "v2.8.0", "version")
+        err := magex.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0", "version")
         if err != nil {
             log.Fatal("could not install packr2")
         }

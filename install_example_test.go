@@ -18,7 +18,7 @@ func ExampleEnsureMage() {
 func ExampleEnsurePackage() {
 	// Install packr2@v2.8.0 using the command `packr2 version` to detect if the
 	// correct version is installed.
-	err := magex.EnsurePackage("github.com/gobuffalo/packr/v2/packr2/cmd", "v2.8.0", "version")
+	err := magex.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0", "version")
 	if err != nil {
 		log.Fatal("could not install packr2")
 	}
@@ -26,7 +26,7 @@ func ExampleEnsurePackage() {
 
 func ExampleInstallPackage() {
 	// Install packr2@v2.8.0
-	err := magex.InstallPackage("github.com/gobuffalo/packr/v2/packr2/cmd", "v2.8.0")
+	err := magex.InstallPackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0")
 	if err != nil {
 		log.Fatal("could not install packr2")
 	}

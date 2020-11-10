@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/carolynvs/magex/shx"
+	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
 
@@ -40,4 +41,15 @@ func ExampleOutputE() {
 	}
 
 	fmt.Println(versionOutput)
+}
+
+func ExampleCollapseArgs() {
+	// Only pass -v to go test when the target was called with -v
+	// mage -v test -> go test -v ./...
+	// mage test -> go test ./...
+	v := ""
+	if mg.Verbose() {
+		v = "-v"
+	}
+	sh.RunV("go", "test", v, "./...")
 }

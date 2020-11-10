@@ -61,3 +61,17 @@ func InDir(dir string, cmd func() error) error {
 
 	return cmd()
 }
+
+// CollapseArgs removes empty arguments from the argument list.
+//
+// This is helpful when sometimes a flag should be specified and
+// sometimes it shouldn't.
+func CollapseArgs(args ...string) []string {
+	result := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg != "" {
+			result = append(result, arg)
+		}
+	}
+	return result
+}

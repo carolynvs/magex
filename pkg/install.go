@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/carolynvs/magex/shx"
+	"github.com/carolynvs/magex/xplat"
 	"github.com/pkg/errors"
 )
 
@@ -87,7 +88,7 @@ func InstallMage(version string) error {
 		return err
 	}
 
-	src := JoinPath(GOPATH(), "src/github.com/magefile/mage")
+	src := xplat.FilePathJoin(xplat.GOPATH(), "src/github.com/magefile/mage")
 	err = shx.InDir(src, func() error {
 		return shx.RunE("go", "run", "bootstrap.go")
 	})
@@ -120,11 +121,8 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 // EnsureGopathBinInPath checks if GOPATH/bin is in PATH and adds it if necessary.
 func EnsureGopathBinInPath() {
 	path := os.Getenv("PATH")
-	bin := JoinPath(GOPATH(), "bin")
+	bin := xplat.FilePathJoin(xplat.GOPATH(), "bin")
 	if !strings.Contains(path, bin) {
-		log.Printf("Adding %s to $PATH\n", bin)
-		sep := listPathSeparator(path)
-		path += sep + bin
-		os.Setenv("PATH", path)
+		xplat.PrependPath(bin)
 	}
 }

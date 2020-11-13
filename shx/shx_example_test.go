@@ -3,34 +3,38 @@ package shx_test
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
 
-func ExampleInDir() {
-	// Run `go get -u github.com/gobuffalo/packr/v2/packr2` in /tmp
-	pkg := "github.com/gobuffalo/packr/v2/packr2"
-	err := shx.InDir(os.TempDir(), func() error {
-		return sh.Run("go", "get", "-u", pkg)
-	})
+func ExampleRunS() {
+	err := shx.RunS("bash", "-c", "echo hello world")
 	if err != nil {
-		log.Fatal("could not install packr2")
+		fmt.Printf("%v\n", err)
 	}
+
+	// Output:
 }
 
-func ExampleRunS() {
-	// Determine whether or not a container exists, without logging stdout
-	// or stderr
-	containerName := "registry"
-	err := shx.RunS("docker", "inspect", containerName)
-	if err != nil {
-		log.Println("container exists")
-	} else {
-		log.Println("container does not exist")
+func ExampleRunE() {
+	err := shx.RunE("bash", "-c", "oops")
+	if err == nil {
+		fmt.Println("error was expected")
 	}
+	// Output:
+}
+
+func ExampleOutputS() {
+	output, err := shx.OutputS("bash", "-c", "echo hello world")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if output != "hello world" {
+		log.Fatal(`expected to capture "hello world"`)
+	}
+	// Output:
 }
 
 func ExampleOutputE() {

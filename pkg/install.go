@@ -9,6 +9,7 @@ import (
 
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
+	"github.com/magefile/mage/sh"
 	"github.com/pkg/errors"
 )
 
@@ -62,9 +63,8 @@ func InstallPackage(pkg string, version string) error {
 	}
 
 	log.Printf("Installing %s%s\n", cmd, moduleVersion)
-	err := shx.InDir(os.TempDir(), func() error {
-		return shx.RunE("go", "get", "-u", pkg+moduleVersion)
-	})
+	_, _, err := sh.Command("go", "get", "-u", pkg+moduleVersion).
+                Stdout(nil).In(os.TempDir()).Run()
 	if err != nil {
 		return err
 	}
@@ -89,9 +89,8 @@ func InstallMage(version string) error {
 	}
 
 	src := xplat.FilePathJoin(xplat.GOPATH(), "src/github.com/magefile/mage")
-	err = shx.InDir(src, func() error {
-		return shx.RunE("go", "run", "bootstrap.go")
-	})
+	_, _, err = sh.Command("go", "run", "bootstrap.go").
+		Stdout(nil).In(src).Run()
 	return errors.Wrap(err, "could not build mage with version info")
 }
 

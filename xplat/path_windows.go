@@ -12,7 +12,7 @@ import (
 // For example, on Windows with Git Bash (mingw) the path is formatted
 // linux-style.
 func FilePathJoin(elem ...string) string {
-	if IsMingw() {
+	if IsMSys2() {
 		return path.Join(elem...)
 	}
 

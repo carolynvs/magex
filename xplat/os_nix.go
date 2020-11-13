@@ -18,8 +18,3 @@ func PathListSeparator() rune {
 func PathSeparator() rune {
 	return os.PathSeparator
 }
-
-// IsMingw determines if the process is executing on Git Bash (MingW).
-func IsMingw() bool {
-	return false
-}

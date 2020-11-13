@@ -120,9 +120,6 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 
 // EnsureGopathBinInPath checks if GOPATH/bin is in PATH and adds it if necessary.
 func EnsureGopathBinInPath() {
-	path := os.Getenv("PATH")
 	bin := xplat.FilePathJoin(xplat.GOPATH(), "bin")
-	if !strings.Contains(path, bin) {
-		xplat.PrependPath(bin)
-	}
+	xplat.EnsureInPath(bin)
 }

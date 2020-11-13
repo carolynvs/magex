@@ -11,7 +11,7 @@ import (
 // GOPATH returns the current GOPATH that is safe to use on any OS, including
 // when run through Git Bash (mingw).
 func GOPATH() string {
-	if IsMingw() {
+	if IsMSys2() {
 		gopath := build.Default.GOPATH
 		// Remove volume separator
 		gopath = strings.ReplaceAll(gopath, ":", "")

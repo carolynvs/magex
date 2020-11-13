@@ -2,15 +2,20 @@ name: test
 on: [push, pull_request]
 
 jobs:
-  test-linux:
-    runs-on: ubuntu-20.04
+  test-nix:
+    strategy:
+      matrix:
+        runs-on: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.1'
       - name: Run Tests in Bash
-        run: go run mage.go test
+        run: |
+          export TEST_SHELL=bash
+          go run mage.go test
         shell: bash
   test-windows:
     runs-on: windows-latest
@@ -19,10 +24,19 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.1'
+      - name: Run Mage in CMD
+        run: |
+          SET TEST_SHELL=cmd
+          go run mage.go test
+        shell: cmd
       - name: Run Mage in PowerShell
-        run: go run mage.go test
+        run: |
+          $env:TEST_SHELL="powershell"
+          go run mage.go test
         shell: powershell
       - name: Run Mage in Git Bash
-        run: go run mage.go test
+        run: |
+          export TEST_SHELL=mingw64
+          go run mage.go test
         shell: bash
 

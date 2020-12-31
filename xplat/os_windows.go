@@ -28,3 +28,8 @@ func PathListSeparator() rune {
 
 	return os.PathListSeparator
 }
+
+// FileExt returns the default file extension based on the operating system.
+func FileExt() string {
+	return ".exe"
+}

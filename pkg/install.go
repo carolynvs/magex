@@ -173,7 +173,7 @@ func DownloadToGopathBin(src string, name string) error {
 	f.Close()
 
 	// Move it to GOPATH/bin
-	dest := filepath.Join(GetGopathBin(), name)
+	dest := filepath.Join(GetGopathBin(), name+xplat.FileExt())
 	err = os.Rename(f.Name(), dest)
 	return errors.Wrapf(err, "error moving %s to %s", src, dest)
 }

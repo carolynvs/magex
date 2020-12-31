@@ -18,3 +18,8 @@ func PathListSeparator() rune {
 func PathSeparator() rune {
 	return os.PathSeparator
 }
+
+// FileExt returns the default file extension based on the operating system.
+func FileExt() string {
+	return ""
+}

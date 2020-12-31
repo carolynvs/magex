@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -26,7 +27,8 @@ func InPath(value string) bool {
 }
 
 // EnsureInPath adds the specified path to the beginning of the PATH environment
-// variable when it is already in PATH.
+// variable when it is not already in PATH. Detects if this is an Azure CI build
+// and exports the updated PATH.
 func EnsureInPath(value string) {
 	if !InPath(value) {
 		PrependPath(value)
@@ -34,7 +36,7 @@ func EnsureInPath(value string) {
 }
 
 // PrependPath adds the specified path to the beginning of the PATH environment
-// variable.
+// variable. Detects if this is an Azure CI build and exports the updated PATH.
 func PrependPath(value string) {
 	path := os.Getenv("PATH")
 	sep := string(PathListSeparator())
@@ -42,4 +44,9 @@ func PrependPath(value string) {
 	path = fmt.Sprintf("%s%s%s", value, sep, path)
 	os.Setenv("PATH", path)
 	log.Printf("Added %s to $PATH\n", value)
+
+	isAzureCI := os.Getenv("TF_BUILD")
+	if ok, _ := strconv.ParseBool(isAzureCI); ok {
+		fmt.Printf("##vso[task.prependpath]%s\n", value)
+	}
 }

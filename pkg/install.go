@@ -121,21 +121,25 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 	return versionFound, nil
 }
 
-func getGopathBin() string {
+// GetGopathBin returns GOPATH/bin.
+func GetGopathBin() string {
 	return xplat.FilePathJoin(xplat.GOPATH(), "bin")
 }
 
+// EnsureGopathBin ensures that GOPATH/bin exists.
 func EnsureGopathBin() error {
-	gopathBin := getGopathBin()
+	gopathBin := GetGopathBin()
 	err := os.MkdirAll(gopathBin, 0755)
 	return errors.Wrapf(err, "could not create GOPATH/bin at %s", gopathBin)
 }
 
 // EnsureGopathBinInPath checks if GOPATH/bin is in PATH and adds it if necessary.
+// Detects if this is an Azure CI build and exports the updated PATH.
 func EnsureGopathBinInPath() {
-	xplat.EnsureInPath(getGopathBin())
+	xplat.EnsureInPath(GetGopathBin())
 }
 
+// DownloadToGopathBin downloads an executable file to GOPATH/bin.
 func DownloadToGopathBin(src string, name string) error {
 	log.Printf("Downloading %s to $GOPATH/bin\n", src)
 
@@ -170,7 +174,7 @@ func DownloadToGopathBin(src string, name string) error {
 	f.Close()
 
 	// Move it to GOPATH/bin
-	dest := filepath.Join(getGopathBin(), name)
+	dest := filepath.Join(GetGopathBin(), name)
 	err = os.Rename(f.Name(), dest)
 	return errors.Wrapf(err, "error moving %s to %s", src, dest)
 }

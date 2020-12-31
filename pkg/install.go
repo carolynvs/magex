@@ -1,10 +1,14 @@
 package pkg
 
 import (
+	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/carolynvs/magex/shx"
@@ -64,7 +68,7 @@ func InstallPackage(pkg string, version string) error {
 
 	log.Printf("Installing %s%s\n", cmd, moduleVersion)
 	_, _, err := sh.Command("go", "get", "-u", pkg+moduleVersion).
-                Stdout(nil).In(os.TempDir()).Run()
+		Stdout(nil).In(os.TempDir()).Run()
 	if err != nil {
 		return err
 	}
@@ -117,8 +121,41 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 	return versionFound, nil
 }
 
+func getGopathBin() string {
+	return xplat.FilePathJoin(xplat.GOPATH(), "bin")
+}
+
 // EnsureGopathBinInPath checks if GOPATH/bin is in PATH and adds it if necessary.
 func EnsureGopathBinInPath() {
-	bin := xplat.FilePathJoin(xplat.GOPATH(), "bin")
-	xplat.EnsureInPath(bin)
+	xplat.EnsureInPath(getGopathBin())
+}
+
+func DownloadToGopathBin(src string, name string) error {
+	log.Printf("Downloading %s to $GOPATH/bin\n", src)
+	f, err := ioutil.TempFile("", path.Base(src))
+	if err != nil {
+		return errors.Wrap(err, "could not create temp file")
+	}
+	defer f.Close()
+
+	err = os.Chmod(f.Name(), 0755)
+	if err != nil {
+		return errors.Wrapf(err, "could not make %s executable", f.Name())
+	}
+
+	r, err := http.Get(src)
+	if err != nil {
+		return errors.Wrapf(err, "could not resolve %s", src)
+	}
+	defer r.Body.Close()
+
+	_, err = io.Copy(f, r.Body)
+	if err != nil {
+		errors.Wrapf(err, "error downloading %s", src)
+	}
+	f.Close()
+
+	dest := filepath.Join(getGopathBin(), name)
+	err = os.Rename(f.Name(), dest)
+	return errors.Wrapf(err, "error moving %s to %s", src, dest)
 }

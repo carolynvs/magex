@@ -70,7 +70,7 @@ func InstallPackage(pkg string, version string) error {
 
 	log.Printf("Installing %s%s\n", cmd, moduleVersion)
 	_, _, err := sh.Command("go", "get", "-u", pkg+moduleVersion).
-		Stdout(nil).In(os.TempDir()).Run()
+		Env("GO111MODULE=on").Stdout(nil).In(os.TempDir()).Run()
 	if err != nil {
 		return err
 	}

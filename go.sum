@@ -1,5 +1,5 @@
-github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0 h1:5W+JLpLwd/6dZGllMKWGlEGuUzI2o27CZXzKXWdLUnI=
-github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
+github.com/carolynvs/mage v1.10.1-0.20201231152132-ef0b6bffd1ac h1:XU2pe2nDU0oHsDT/E8kUEmwFer0Ehf9v3owMNKl+Zx4=
+github.com/carolynvs/mage v1.10.1-0.20201231152132-ef0b6bffd1ac/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

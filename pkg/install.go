@@ -58,6 +58,8 @@ func EnsurePackage(pkg string, version string, versionArgs ...string) error {
 // When version is specified, install that version. Otherwise install the most
 // recent code from the default branch.
 func InstallPackage(pkg string, version string) error {
+	EnsureGopathBin()
+
 	cmd := path.Base(pkg)
 
 	// Optionally install a specific version of the package
@@ -72,8 +74,6 @@ func InstallPackage(pkg string, version string) error {
 	if err != nil {
 		return err
 	}
-
-	EnsureGopathBinInPath()
 
 	// Check that it worked
 	if found, _ := IsCommandAvailable(cmd, ""); !found {
@@ -126,17 +126,16 @@ func GetGopathBin() string {
 	return xplat.FilePathJoin(xplat.GOPATH(), "bin")
 }
 
-// EnsureGopathBin ensures that GOPATH/bin exists.
+// EnsureGopathBin ensures that GOPATH/bin exists and is in PATH.
+// Detects if this is an Azure CI build and exports the updated PATH.
 func EnsureGopathBin() error {
 	gopathBin := GetGopathBin()
 	err := os.MkdirAll(gopathBin, 0755)
-	return errors.Wrapf(err, "could not create GOPATH/bin at %s", gopathBin)
-}
-
-// EnsureGopathBinInPath checks if GOPATH/bin is in PATH and adds it if necessary.
-// Detects if this is an Azure CI build and exports the updated PATH.
-func EnsureGopathBinInPath() {
+	if err != nil {
+		errors.Wrapf(err, "could not create GOPATH/bin at %s", gopathBin)
+	}
 	xplat.EnsureInPath(GetGopathBin())
+	return nil
 }
 
 // DownloadToGopathBin downloads an executable file to GOPATH/bin.

@@ -125,6 +125,12 @@ func getGopathBin() string {
 	return xplat.FilePathJoin(xplat.GOPATH(), "bin")
 }
 
+func EnsureGopathBin() error {
+	gopathBin := getGopathBin()
+	err := os.MkdirAll(gopathBin, 0755)
+	return errors.Wrapf(err, "could not create GOPATH/bin at %s", gopathBin)
+}
+
 // EnsureGopathBinInPath checks if GOPATH/bin is in PATH and adds it if necessary.
 func EnsureGopathBinInPath() {
 	xplat.EnsureInPath(getGopathBin())
@@ -132,12 +138,20 @@ func EnsureGopathBinInPath() {
 
 func DownloadToGopathBin(src string, name string) error {
 	log.Printf("Downloading %s to $GOPATH/bin\n", src)
+
+	err := EnsureGopathBin()
+	if err != nil {
+		return err
+	}
+
+	// Download to a temp file
 	f, err := ioutil.TempFile("", path.Base(src))
 	if err != nil {
 		return errors.Wrap(err, "could not create temp file")
 	}
 	defer f.Close()
 
+	// Make it executable
 	err = os.Chmod(f.Name(), 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not make %s executable", f.Name())
@@ -155,6 +169,7 @@ func DownloadToGopathBin(src string, name string) error {
 	}
 	f.Close()
 
+	// Move it to GOPATH/bin
 	dest := filepath.Join(getGopathBin(), name)
 	err = os.Rename(f.Name(), dest)
 	return errors.Wrapf(err, "error moving %s to %s", src, dest)

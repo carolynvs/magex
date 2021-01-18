@@ -1,7 +1,9 @@
-github.com/carolynvs/mage v1.10.1-0.20201231152132-ef0b6bffd1ac h1:XU2pe2nDU0oHsDT/E8kUEmwFer0Ehf9v3owMNKl+Zx4=
-github.com/carolynvs/mage v1.10.1-0.20201231152132-ef0b6bffd1ac/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
+github.com/carolynvs/mage v1.10.1-0.20210115194910-75749aa34e48 h1:llehFuQkH9xV2cWS9CqedZGcxwLc70JRPskJoM8r+o0=
+github.com/carolynvs/mage v1.10.1-0.20210115194910-75749aa34e48/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/magefile/mage v1.11.0 h1:C/55Ywp9BpgVVclD3lRnSYCwXTYxmSppIgLeDYlNuls=
+github.com/magefile/mage v1.11.0/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

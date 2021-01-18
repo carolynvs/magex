@@ -2,7 +2,9 @@
 
 package xplat
 
-import "go/build"
+import (
+	"go/build"
+)
 
 // GOPATH returns the current GOPATH that is safe to use on any OS, including
 // when run through Git Bash (mingw).

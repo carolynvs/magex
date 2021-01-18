@@ -1,59 +1,52 @@
 package shx_test
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/carolynvs/magex/shx"
-	"github.com/magefile/mage/mg"
-	"github.com/magefile/mage/sh"
 )
 
 func ExampleRunS() {
-	err := shx.RunS("bash", "-c", "echo hello world")
+	err := shx.RunS("go", "run", "echo.go", "hello world")
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		log.Fatal(err)
 	}
 
 	// Output:
 }
 
 func ExampleRunE() {
-	err := shx.RunE("bash", "-c", "oops")
+	err := shx.RunE("go", "run")
 	if err == nil {
-		fmt.Println("error was expected")
+		log.Fatal("expected the command to fail")
 	}
+
 	// Output:
 }
 
 func ExampleOutputS() {
-	output, err := shx.OutputS("bash", "-c", "echo hello world")
+	output, err := shx.OutputS("go", "run", "echo.go", "hello world")
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if output != "hello world" {
-		log.Fatal(`expected to capture "hello world"`)
+		log.Fatal(`expected to capture the output of the command`)
 	}
+
 	// Output:
 }
 
 func ExampleOutputE() {
-	// Get the output of `docker --version`, only logging stderr when the command fails.
-	versionOutput, err := shx.OutputE("docker", "--version")
+	output, err := shx.OutputE("go", "run", "echo.go", "hello world")
 	if err != nil {
-		log.Println("could not get the docker version")
+		log.Fatal(err)
 	}
 
-	fmt.Println(versionOutput)
-}
-
-func ExampleCollapseArgs() {
-	// Only pass -v to go test when the target was called with -v
-	// mage -v test -> go test -v ./...
-	// mage test -> go test ./...
-	v := ""
-	if mg.Verbose() {
-		v = "-v"
+	if output != "hello world\n" {
+		log.Fatal("expected to capture the output of the command")
 	}
-	sh.RunV("go", "test", v, "./...")
+
+	// Nothing is printed because the command passed
+	// Output:
 }

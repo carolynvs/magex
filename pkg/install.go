@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"bytes"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -9,11 +11,11 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
-	"github.com/magefile/mage/sh"
 	"github.com/pkg/errors"
 )
 
@@ -69,8 +71,8 @@ func InstallPackage(pkg string, version string) error {
 	}
 
 	log.Printf("Installing %s%s\n", cmd, moduleVersion)
-	_, _, err := sh.Command("go", "get", "-u", pkg+moduleVersion).
-		Env("GO111MODULE=on").Stdout(nil).In(os.TempDir()).Run()
+	err := shx.Command("go", "get", "-u", pkg+moduleVersion).
+		Env("GO111MODULE=on").In(os.TempDir()).RunE()
 	if err != nil {
 		return err
 	}
@@ -93,8 +95,7 @@ func InstallMage(version string) error {
 	}
 
 	src := xplat.FilePathJoin(xplat.GOPATH(), "src/github.com/magefile/mage")
-	_, _, err = sh.Command("go", "run", "bootstrap.go").
-		Stdout(nil).In(src).Run()
+	err = shx.Command("go", "run", "bootstrap.go").In(src).RunE()
 	return errors.Wrap(err, "could not build mage with version info")
 }
 
@@ -139,10 +140,19 @@ func EnsureGopathBin() error {
 }
 
 // DownloadToGopathBin downloads an executable file to GOPATH/bin.
-func DownloadToGopathBin(src string, name string) error {
+// src can include the following template values:
+//   - {{.GOOS}}
+//   - {{.GOARCH}}
+//   - {{.EXT}}
+//   - {{.VERSION}}
+func DownloadToGopathBin(srcTemplate string, name string, version string) error {
+	src, err := renderUrlTemplate(srcTemplate, version)
+	if err != nil {
+		return err
+	}
 	log.Printf("Downloading %s to $GOPATH/bin\n", src)
 
-	err := EnsureGopathBin()
+	err = EnsureGopathBin()
 	if err != nil {
 		return err
 	}
@@ -176,4 +186,31 @@ func DownloadToGopathBin(src string, name string) error {
 	dest := filepath.Join(GetGopathBin(), name+xplat.FileExt())
 	err = os.Rename(f.Name(), dest)
 	return errors.Wrapf(err, "error moving %s to %s", src, dest)
+}
+
+func renderUrlTemplate(srcTemplate string, version string) (string, error) {
+	tmpl, err := template.New("url").Parse(srcTemplate)
+	if err != nil {
+		return "", errors.Wrapf(err, "error parsing %s as a Go template", srcTemplate)
+	}
+
+	srcData := struct {
+		GOOS    string
+		GOARCH  string
+		EXT     string
+		VERSION string
+	}{
+		GOOS:    runtime.GOOS,
+		GOARCH:  runtime.GOARCH,
+		EXT:     xplat.FileExt(),
+		VERSION: version,
+	}
+
+	buf := &bytes.Buffer{}
+	err = tmpl.Execute(buf, srcData)
+	if err != nil {
+		return "", errors.Wrapf(err, "error rendering %s as a Go template with data: %#v", srcTemplate, srcData)
+	}
+
+	return buf.String(), nil
 }

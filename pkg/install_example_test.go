@@ -2,12 +2,6 @@ package pkg_test
 
 import (
 	"log"
-	"os"
-	"path/filepath"
-	"testing"
-
-	"github.com/carolynvs/magex/xplat"
-	"github.com/stretchr/testify/require"
 
 	"github.com/carolynvs/magex/pkg"
 )
@@ -48,16 +42,4 @@ func ExampleDownloadToGopathBin() {
 	// Add GOPATH/bin to PATH if necessary so that we can immediately
 	// use the installed tool
 	pkg.EnsureGopathBin()
-}
-
-func TestDownloadToGopathBin(t *testing.T) {
-	url := "https://storage.googleapis.com/kubernetes-release/release/{{.VERSION}}/bin/{{.GOOS}}/{{.GOARCH}}/kubectl{{.EXT}}"
-	err := pkg.DownloadToGopathBin(url, "kubectl", "v1.19.0")
-	require.NoError(t, err)
-
-	dest := filepath.Join(xplat.GOPATH(), "bin/kubectl")
-	_, err = os.Stat(dest)
-	require.NoError(t, err)
-
-	os.Remove(dest)
 }

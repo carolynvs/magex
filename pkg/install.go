@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -42,7 +43,7 @@ func EnsureMage(version string) error {
 // if not, install the package at that version. Otherwise install the most
 // recent code from the main branch.
 func EnsurePackage(pkg string, version string, versionArgs ...string) error {
-	cmd := path.Base(pkg)
+	cmd := getCommandName(pkg)
 
 	found, err := IsCommandAvailable(cmd, version, versionArgs...)
 	if err != nil {
@@ -55,6 +56,14 @@ func EnsurePackage(pkg string, version string, versionArgs ...string) error {
 	return nil
 }
 
+func getCommandName(pkg string) string {
+	name := path.Base(pkg)
+	if ok, _ := regexp.MatchString(`v[\d]+`, name); ok {
+		return getCommandName(path.Dir(pkg))
+	}
+	return name
+}
+
 // InstallPackage installs the latest version of a package.
 //
 // When version is specified, install that version. Otherwise install the most
@@ -62,12 +71,16 @@ func EnsurePackage(pkg string, version string, versionArgs ...string) error {
 func InstallPackage(pkg string, version string) error {
 	EnsureGopathBin()
 
-	cmd := path.Base(pkg)
+	cmd := getCommandName(pkg)
 
 	// Optionally install a specific version of the package
 	moduleVersion := ""
 	if version != "" {
-		moduleVersion = "@" + version
+		if strings.HasPrefix(version, "v") {
+			moduleVersion = "@" + version
+		} else {
+			moduleVersion = "@v" + version
+		}
 	}
 
 	log.Printf("Installing %s%s\n", cmd, moduleVersion)

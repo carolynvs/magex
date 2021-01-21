@@ -20,7 +20,7 @@ func TestDownloadToGopathBin(t *testing.T) {
 	err := DownloadToGopathBin(url, "kubectl", "v1.19.0")
 	require.NoError(t, err)
 
-	dest := filepath.Join(xplat.GOPATH(), "bin/kubectl")
+	dest := filepath.Join(xplat.GOPATH(), "bin/kubectl"+xplat.FileExt())
 	_, err = os.Stat(dest)
 	require.NoError(t, err)
 

@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -83,7 +84,7 @@ func InstallPackage(pkg string, version string) error {
 		}
 	}
 
-	log.Printf("Installing %s%s\n", cmd, moduleVersion)
+	fmt.Printf("Installing %s%s\n", cmd, moduleVersion)
 	err := shx.Command("go", "get", "-u", pkg+moduleVersion).
 		Env("GO111MODULE=on").In(os.TempDir()).RunE()
 	if err != nil {

@@ -10,8 +10,8 @@ import (
 
 // InPath determines if the path is in the PATH environment variable.
 func InPath(value string) bool {
-	pathSep := string(PathSeparator())
-	pathListSep := string(PathListSeparator())
+	pathSep := string(os.PathSeparator)
+	pathListSep := string(os.PathListSeparator)
 	value = strings.TrimRight(value, pathSep)
 
 	path := os.Getenv("PATH")
@@ -39,7 +39,7 @@ func EnsureInPath(value string) {
 // variable. Detects if this is an Azure CI build and exports the updated PATH.
 func PrependPath(value string) {
 	path := os.Getenv("PATH")
-	sep := string(PathListSeparator())
+	sep := string(os.PathListSeparator)
 
 	path = fmt.Sprintf("%s%s%s", value, sep, path)
 	os.Setenv("PATH", path)

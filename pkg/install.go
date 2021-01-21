@@ -90,7 +90,7 @@ func InstallPackage(pkg string, version string) error {
 		return err
 	}
 
-	// Check that it worked
+	log.Printf("Checking if %s is accessible from the PATH", cmd)
 	if found, _ := IsCommandAvailable(cmd, ""); !found {
 		return errors.Errorf("Could not install %s. Please install it manually", pkg)
 	}
@@ -107,7 +107,7 @@ func InstallMage(version string) error {
 		return err
 	}
 
-	src := xplat.FilePathJoin(xplat.GOPATH(), "src/github.com/magefile/mage")
+	src := filepath.Join(GOPATH(), "src/github.com/magefile/mage")
 	err = shx.Command("go", "run", "bootstrap.go").In(src).RunE()
 	return errors.Wrap(err, "could not build mage with version info")
 }
@@ -137,7 +137,7 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 
 // GetGopathBin returns GOPATH/bin.
 func GetGopathBin() string {
-	return xplat.FilePathJoin(xplat.GOPATH(), "bin")
+	return filepath.Join(GOPATH(), "bin")
 }
 
 // EnsureGopathBin ensures that GOPATH/bin exists and is in PATH.

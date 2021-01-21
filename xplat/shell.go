@@ -7,12 +7,6 @@ import (
 	"strings"
 )
 
-// IsMSys2 detects if the current shell is an installation of
-// unix-like environment, such as Git Bash.
-func IsMSys2() bool {
-	return GetMSystem() != ""
-}
-
 // GetMSystem returns current the MSys2 subsystem.
 //
 // Allowed values are: (empty), mingw32, mingw64, msys2.
@@ -32,7 +26,7 @@ func GetMSystem() string {
 // * PSModulePath containing user's home directory
 func DetectShell() string {
 	msystem := GetMSystem()
-	if msystem != ""{
+	if msystem != "" {
 		return msystem
 	}
 

@@ -11,8 +11,8 @@ import (
 )
 
 func TestInPath(t *testing.T) {
-	pathSep := string(PathSeparator())
-	listSep := string(PathListSeparator())
+	pathSep := string(os.PathSeparator)
+	listSep := string(os.PathListSeparator)
 
 	mkPath := func(pathParts ...[]string) string {
 		paths := make([]string, 0, len(pathParts))
@@ -52,7 +52,7 @@ func TestPrependPath(t *testing.T) {
 	origPath := os.Getenv("PATH")
 	defer os.Setenv("PATH", origPath)
 
-	if runtime.GOOS == "windows" && !IsMSys2() {
+	if runtime.GOOS == "windows" {
 		os.Setenv("PATH", `C:\Temp`)
 		PrependPath(`C:\test`)
 		gotPath := os.Getenv("PATH")

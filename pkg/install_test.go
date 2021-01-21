@@ -3,13 +3,13 @@ package pkg
 import (
 	"go/build"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/carolynvs/magex/xplat"
+	"github.com/magefile/mage/mg"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func TestDownloadToGopathBin(t *testing.T) {
 	err := DownloadToGopathBin(url, "kubectl", "v1.19.0")
 	require.NoError(t, err)
 
-	dest := filepath.Join(xplat.GOPATH(), "bin/kubectl"+xplat.FileExt())
+	dest := filepath.Join(GOPATH(), "bin/kubectl"+xplat.FileExt())
 	_, err = os.Stat(dest)
 	require.NoError(t, err)
 
@@ -45,25 +45,15 @@ func TestGetCommandName(t *testing.T) {
 }
 
 func TestEnsurePackage_MajorVersion(t *testing.T) {
+	os.Setenv(mg.VerboseEnv, "true")
 	err, cleanup := UseTempGopath(t)
 	defer cleanup()
 	require.NoError(t, err, "Failed to set up a temporary GOPATH")
 
-	hasCmd, err := IsCommandAvailable("yq", "")
+	hasCmd, err := IsCommandAvailable("testpkg", "")
 	require.False(t, hasCmd)
-	err = EnsurePackage("github.com/mikefarah/yq/v4", "4.4.1", "--version")
+	err = EnsurePackage("github.com/carolynvs/testpkg/v2", "v2.0.1", "--version")
 	require.NoError(t, err)
-}
-
-func TestInstallPackage_MajorVersion(t *testing.T) {
-	err, cleanup := UseTempGopath(t)
-	defer cleanup()
-	require.NoError(t, err, "Failed to set up a temporary GOPATH")
-
-	err = InstallPackage("github.com/mikefarah/yq/v4", "4.4.1")
-	if err != nil {
-		log.Fatal("could not install yq")
-	}
 }
 
 func UseTempGopath(t *testing.T) (error, func()) {
@@ -79,7 +69,7 @@ func UseTempGopath(t *testing.T) (error, func()) {
 		defer os.Setenv("GOPATH", build.Default.GOPATH)
 	}
 
-	// Remove actual GOPATH/bin from PATH so the test doesn't accidentally pass because yq was installed before the test was run
+	// Remove actual GOPATH/bin from PATH so the test doesn't accidentally pass because the package was installed before the test was run
 	gopathBin := filepath.Join(build.Default.GOPATH, "bin")
 	os.Setenv("PATH", strings.ReplaceAll(oldpath, gopathBin, ""))
 

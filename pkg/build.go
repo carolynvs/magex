@@ -1,14 +1,11 @@
-// +build !windows
-
-package xplat
+package pkg
 
 import (
 	"go/build"
 	"os"
 )
 
-// GOPATH returns the current GOPATH that is safe to use on any OS, including
-// when run through Git Bash (mingw).
+// GOPATH returns the current GOPATH.
 func GOPATH() string {
 	gopath := os.Getenv("GOPATH")
 	if gopath != "" {

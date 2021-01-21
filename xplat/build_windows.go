@@ -4,6 +4,7 @@ package xplat
 
 import (
 	"go/build"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -11,8 +12,12 @@ import (
 // GOPATH returns the current GOPATH that is safe to use on any OS, including
 // when run through Git Bash (mingw).
 func GOPATH() string {
+	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = build.Default.GOPATH
+	}
+
 	if IsMSys2() {
-		gopath := build.Default.GOPATH
 		// Remove volume separator
 		gopath = strings.ReplaceAll(gopath, ":", "")
 		// Convert to unix path separator
@@ -20,5 +25,5 @@ func GOPATH() string {
 		return gopath
 	}
 
-	return build.Default.GOPATH
+	return gopath
 }

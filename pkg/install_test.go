@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/carolynvs/magex/xplat"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,16 +45,9 @@ func TestGetCommandName(t *testing.T) {
 }
 
 func TestEnsurePackage_MajorVersion(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "magex")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmp)
-
-	os.Setenv("GOPATH", tmp)
-	defer os.Setenv("GOPATH", build.Default.GOPATH)
-
-	path := os.Getenv("PATH")
-	os.Setenv("PATH", strings.ReplaceAll(path, build.Default.GOPATH, ""))
-	defer os.Setenv("PATH", path)
+	err, cleanup := UseTempGopath(t)
+	defer cleanup()
+	require.NoError(t, err, "Failed to set up a temporary GOPATH")
 
 	hasCmd, err := IsCommandAvailable("yq", "")
 	require.False(t, hasCmd)
@@ -62,14 +56,35 @@ func TestEnsurePackage_MajorVersion(t *testing.T) {
 }
 
 func TestInstallPackage_MajorVersion(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "magex")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmp)
-
-	os.Setenv("GOPATH", tmp)
+	err, cleanup := UseTempGopath(t)
+	defer cleanup()
+	require.NoError(t, err, "Failed to set up a temporary GOPATH")
 
 	err = InstallPackage("github.com/mikefarah/yq/v4", "4.4.1")
 	if err != nil {
 		log.Fatal("could not install yq")
 	}
+}
+
+func UseTempGopath(t *testing.T) (error, func()) {
+	oldpath := os.Getenv("PATH")
+	tmp, err := ioutil.TempDir("", "magex")
+	if err != nil {
+		return errors.Wrap(err, "Failed to create a temp directory"), func() {}
+	}
+
+	cleanup := func() {
+		os.RemoveAll(tmp)
+		defer os.Setenv("PATH", oldpath)
+		defer os.Setenv("GOPATH", build.Default.GOPATH)
+	}
+
+	// Remove actual GOPATH/bin from PATH so the test doesn't accidentally pass because yq was installed before the test was run
+	gopathBin := filepath.Join(build.Default.GOPATH, "bin")
+	os.Setenv("PATH", strings.ReplaceAll(oldpath, gopathBin, ""))
+
+	// Use temp dir for GOPATH
+	os.Setenv("GOPATH", tmp)
+
+	return EnsureGopathBin(), cleanup
 }

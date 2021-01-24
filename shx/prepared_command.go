@@ -147,8 +147,9 @@ func (c PreparedCommand) RunS() error {
 	return err
 }
 
-// Output executes the prepared command, returning stdout, and writes the output
-// to os.Stdout when mage is run with -v.
+// Output executes the prepared command, directing stderr to os.Stderr and
+// printing stdout to os.Stdout if mage was run with -v. The command's stdout
+// is always returned.
 func (c PreparedCommand) Output() (string, error) {
 	stdout := &bytes.Buffer{}
 	if mg.Verbose() {

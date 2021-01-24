@@ -13,23 +13,18 @@ documentation is on [godoc](godoc.org/github.com/carolynvs/magex).
 package main
 
 import (
-	"github.com/carolynvs/magex"
+	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/shx"
 )
 
 // Install packr2 v2.8.0 if it's not available, and ensure it's in PATH.
-func Packr2() error {
-    if magex.IsCommandAvailable("packr2") {
-        err := magex.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0", "version")
-        if err != nil {
-            log.Fatal("could not install packr2")
-        }
-    }
+func EnsurePackr2() error {
+   return pkg.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0", "version")
 }
 
 // Install mage if it's not available, and ensure it's in PATH. We don't care which version
 func Mage() error {
-    return magex.EnsureMage("")
+    return pkg.EnsureMage("")
 }
 
 // Run a docker registry in a container. Do not print stdout and only print
@@ -39,5 +34,17 @@ func Mage() error {
 // output out of your logs.
 func StartRegistry() error {
     return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", "registry", "registry:2")
+}
+
+// Use go go to download a tool, build and install it manually so 
+// that it has version information embedded in the final binary.
+func CustomInstallTool() error {
+	err := shx.Command("go", "get", "-u", "github.com/magefile/mage")
+    if err != nil {
+    	return err
+    }
+    
+	src := filepath.Join(GOPATH(), "src/github.com/magefile/mage")
+	return shx.Command("go", "run", "bootstrap.go").In(src).RunE()
 }
 ```

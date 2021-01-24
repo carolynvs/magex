@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/carolynvs/magex/shx"
-	"github.com/stretchr/testify/assert"
 	"github.com/magefile/mage/mg"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPreparedCommand_Run(t *testing.T) {
@@ -368,6 +368,17 @@ func ExamplePreparedCommand_RunV() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Output: hello world
+}
+
+func ExamplePreparedCommand_Args() {
+	cmd := shx.Command("go", "run", "echo.go")
+	// Append arguments to the command
+	err := cmd.Args("hello", "world").RunV()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Output: hello world
 }
 

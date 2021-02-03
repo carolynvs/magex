@@ -12,11 +12,13 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.1'
+      - name: Install Mage
+        run: go run mage.go EnsureMage
       - name: Run Tests in Bash
-        run: |
-          export TEST_SHELL=bash
-          go run mage.go test
+        run: mage test
         shell: bash
+        env:
+          TEST_SHELL: bash
   test-windows:
     runs-on: windows-latest
     steps:
@@ -24,19 +26,20 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.14.1'
+      - name: Install Mage
+        run: go run mage.go EnsureMage
       - name: Run Mage in CMD
-        run: |
-          SET TEST_SHELL=cmd
-          go run mage.go test
+        run: mage test
         shell: cmd
+        env:
+          TEST_SHELL: cmd
       - name: Run Mage in PowerShell
-        run: |
-          $env:TEST_SHELL="powershell"
-          go run mage.go test
+        run: mage test
         shell: powershell
+        env:
+          TEST_SHELL: powershell
       - name: Run Mage in Git Bash
-        run: |
-          export TEST_SHELL=mingw64
-          go run mage.go test
+        run: mage test
         shell: bash
-
+        env:
+          TEST_SHELL: mingw64

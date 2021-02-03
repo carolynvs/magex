@@ -1,6 +1,6 @@
 module github.com/carolynvs/magex
 
-go 1.13
+go 1.15
 
 require (
 	github.com/magefile/mage v1.11.0

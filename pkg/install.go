@@ -103,13 +103,25 @@ func InstallPackage(pkg string, version string) error {
 // When version is specified, install that version. Otherwise install the most
 // recent code from the default branch.
 func InstallMage(version string) error {
-	err := InstallPackage("github.com/magefile/mage", version)
-	if err != nil {
-		return err
+	var tag string
+	if version != "" {
+		tag = "-b" + version
 	}
 
-	src := filepath.Join(GOPATH(), "src/github.com/magefile/mage")
-	err = shx.Command("go", "run", "bootstrap.go").In(src).RunE()
+	tmp, err := ioutil.TempDir("", "magefile")
+	if err != nil {
+		return errors.Wrap(err, "could not create a temp directory to install mage")
+	}
+	defer os.RemoveAll(tmp)
+
+	repoUrl := "https://github.com/magefile/mage.git"
+	err = shx.Command("git", "clone", tag, repoUrl).CollapseArgs().In(tmp).RunE()
+	if err != nil {
+		return errors.Wrapf(err, "could not clone %s", repoUrl)
+	}
+
+	repoPath := filepath.Join(tmp, "mage")
+	err = shx.Command("go", "run", "bootstrap.go").In(repoPath).RunE()
 	return errors.Wrap(err, "could not build mage with version info")
 }
 

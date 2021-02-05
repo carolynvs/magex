@@ -9,12 +9,15 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/carolynvs/magex/mgx"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+	"github.com/pkg/errors"
 )
 
 type PreparedCommand struct {
-	Cmd *exec.Cmd
+	Cmd         *exec.Cmd
+	StopOnError bool
 }
 
 // Command creates a default command. Stdout is logged in verbose mode. Stderr
@@ -27,8 +30,22 @@ func Command(cmd string, args ...string) PreparedCommand {
 	return PreparedCommand{Cmd: c}
 }
 
+// String prints the command-line representation of the PreparedCommand.
 func (c PreparedCommand) String() string {
 	return strings.Join(c.Cmd.Args, " ")
+}
+
+// Must immediately stops the build when the command fails.
+func (c PreparedCommand) Must(stopOnError ...bool) PreparedCommand {
+	switch len(stopOnError) {
+	case 0:
+		c.StopOnError = true
+	case 1:
+		c.StopOnError = stopOnError[0]
+	default:
+		mgx.Must(errors.Errorf("More than one value for Must(stopOnError ...string) was passed to the command %s", c))
+	}
+	return c
 }
 
 // Args appends additional arguments to the command.
@@ -105,7 +122,11 @@ func (c PreparedCommand) Exec() (ran bool, code int, err error) {
 		} else {
 			err = fmt.Errorf(`failed to run "%s: %v"`, c, err)
 		}
+		if c.StopOnError {
+			mgx.Must(err)
+		}
 	}
+
 	return ran, code, err
 }
 

@@ -1,15 +1,14 @@
 package shx_test
 
 import (
-	"io/ioutil"
-	"log"
 	"os"
-	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPreparedCommand_Run(t *testing.T) {
@@ -18,7 +17,7 @@ func TestPreparedCommand_Run(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	err := shx.Command("go", "run", "echo.go", "hello world").Run()
+	err := shx.Run("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -33,7 +32,7 @@ func TestPreparedCommand_Run_Fail(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	err := shx.Command("go", "run").Run()
+	err := shx.Run("go", "run")
 	gotStderr := stderr.Output()
 	if err == nil {
 		t.Fatal("expected shx.Command to fail")
@@ -52,7 +51,7 @@ func TestPreparedCommand_Run_Verbose(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	err := shx.Command("go", "run", "echo.go", "hello world").Run()
+	err := shx.Run("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -73,7 +72,7 @@ func TestPreparedCommand_RunE(t *testing.T) {
 	stdout := shx.RecordStdout()
 	defer stdout.Release()
 
-	err := shx.Command("go", "run", "echo.go", "hello world").RunE()
+	err := shx.RunE("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	if err != nil {
 		t.Fatal(err)
@@ -86,7 +85,7 @@ func TestPreparedCommand_RunE_Fail(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	err := shx.Command("go", "run").RunE()
+	err := shx.RunE("go", "run")
 	gotStderr := stderr.Output()
 	if err == nil {
 		t.Fatal("expected the shx.Command to fail")
@@ -105,7 +104,7 @@ func TestPreparedCommand_RunE_Verbose(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	err := shx.Command("go", "run", "echo.go", "hello world").RunE()
+	err := shx.RunE("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -124,7 +123,7 @@ func TestPreparedCommand_RunS(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	err := shx.Command("go", "run", "echo.go", "hello world").RunS()
+	err := shx.RunS("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -144,7 +143,7 @@ func TestPreparedCommand_RunS_Verbose(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run", "echo.go", "hello world").OutputS()
+	gotOutput, err := shx.OutputS("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -163,7 +162,7 @@ func TestPreparedCommand_RunS_Fail(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	err := shx.Command("go", "run").RunS()
+	err := shx.RunS("go", "run")
 	gotStderr := stderr.Output()
 	if err == nil {
 		t.Fatal("expected the shx.Command to fail")
@@ -173,7 +172,7 @@ func TestPreparedCommand_RunS_Fail(t *testing.T) {
 }
 
 func TestPreparedCommand_CollapseArgs(t *testing.T) {
-	err := shx.Command("go", "", "run", "", "echo.go", "hello world", "").Run()
+	err := shx.Run("go", "", "run", "", "echo.go", "hello world", "")
 	if err == nil {
 		t.Fatal("expected empty arguments to be preserved in the constructor")
 	}
@@ -195,7 +194,7 @@ func TestPreparedCommand_Output(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run", "echo.go", "hello world").Output()
+	gotOutput, err := shx.Output("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -212,7 +211,7 @@ func TestPreparedCommand_Output_Fail(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run").Output()
+	gotOutput, err := shx.Output("go", "run")
 	gotStderr := stderr.Output()
 	if err == nil {
 		t.Fatal("expected shx.Command to fail")
@@ -232,7 +231,7 @@ func TestPreparedCommand_Output_Verbose(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run", "echo.go", "hello world").Output()
+	gotOutput, err := shx.Output("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -256,7 +255,7 @@ func TestPreparedCommand_OutputE(t *testing.T) {
 	stdout := shx.RecordStdout()
 	defer stdout.Release()
 
-	gotOutput, err := shx.Command("go", "run", "echo.go", "hello world").OutputE()
+	gotOutput, err := shx.OutputE("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	if err != nil {
 		t.Fatal(err)
@@ -271,7 +270,7 @@ func TestPreparedCommand_OutputE_Fail(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run").OutputE()
+	gotOutput, err := shx.OutputE("go", "run")
 	gotStderr := stderr.Output()
 	if err == nil {
 		t.Fatal("expected the shx.Command to fail")
@@ -291,7 +290,7 @@ func TestPreparedCommand_OutputE_Verbose(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run", "echo.go", "hello world").OutputE()
+	gotOutput, err := shx.OutputE("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -312,7 +311,7 @@ func TestPreparedCommand_OutputS(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run", "echo.go", "hello world").OutputS()
+	gotOutput, err := shx.OutputS("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -334,7 +333,7 @@ func TestPreparedCommand_OutputS_Verbose(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run", "echo.go", "hello world").OutputS()
+	gotOutput, err := shx.OutputS("go", "run", "echo.go", "hello world")
 	gotStdout := stdout.Output()
 	gotStderr := stderr.Output()
 	if err != nil {
@@ -353,7 +352,7 @@ func TestPreparedCommand_OutputS_Fail(t *testing.T) {
 	stderr := shx.RecordStderr()
 	defer stderr.Release()
 
-	gotOutput, err := shx.Command("go", "run").OutputS()
+	gotOutput, err := shx.OutputS("go", "run")
 	gotStderr := stderr.Output()
 	if err == nil {
 		t.Fatal("expected the shx.Command to fail")
@@ -363,65 +362,10 @@ func TestPreparedCommand_OutputS_Fail(t *testing.T) {
 	assert.Empty(t, gotOutput)
 }
 
-func ExamplePreparedCommand_RunV() {
-	err := shx.Command("go", "run", "echo.go", "hello world").RunV()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Output: hello world
-}
+func TestPreparedCommand_Stdin(t *testing.T) {
+	stdin := strings.NewReader("hello world")
+	gotOutput, err := shx.Command("go", "run", "echo.go", "-").Stdin(stdin).OutputE()
+	require.NoError(t, err, "command failed")
 
-func ExamplePreparedCommand_Args() {
-	cmd := shx.Command("go", "run", "echo.go")
-	// Append arguments to the command
-	err := cmd.Args("hello", "world").RunV()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Output: hello world
-}
-
-func ExamplePreparedCommand_In() {
-	tmp, err := ioutil.TempDir("", "mage")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	contents := `package main
-
-import "fmt"
-
-func main() {
-	fmt.Println("hello world")
-}
-`
-	err = ioutil.WriteFile(filepath.Join(tmp, "test_main.go"), []byte(contents), 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Run `go run test_main.go` in /tmp
-	err = shx.Command("go", "run", "test_main.go").In(tmp).RunV()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Output: hello world
-}
-
-func ExamplePreparedCommand_RunS() {
-	err := shx.Command("go", "run", "echo.go", "hello world").RunS()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Output:
-}
-
-func ExamplePreparedCommand_CollapseArgs() {
-	err := shx.Command("go", "run", "echo.go", "hello", "", "world").CollapseArgs().RunV()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Output: hello world
+	assert.Equal(t, "hello world", gotOutput)
 }

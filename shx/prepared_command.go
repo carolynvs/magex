@@ -86,6 +86,12 @@ func (c PreparedCommand) In(dir string) PreparedCommand {
 	return c
 }
 
+// Stdin sets the command's stdin.
+func (c PreparedCommand) Stdin(stdin io.Reader) PreparedCommand {
+	c.Cmd.Stdin = stdin
+	return c
+}
+
 // Stdout directs stdout from the command.
 func (c PreparedCommand) Stdout(stdout io.Writer) PreparedCommand {
 	c.Cmd.Stdout = stdout

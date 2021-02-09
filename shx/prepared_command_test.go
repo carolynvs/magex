@@ -2,11 +2,13 @@ package shx_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPreparedCommand_Run(t *testing.T) {
@@ -358,4 +360,12 @@ func TestPreparedCommand_OutputS_Fail(t *testing.T) {
 
 	assert.Empty(t, gotStderr)
 	assert.Empty(t, gotOutput)
+}
+
+func TestPreparedCommand_Stdin(t *testing.T) {
+	stdin := strings.NewReader("hello world")
+	gotOutput, err := shx.Command("go", "run", "echo.go", "-").Stdin(stdin).OutputE()
+	require.NoError(t, err, "command failed")
+
+	assert.Equal(t, "hello world", gotOutput)
 }

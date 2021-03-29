@@ -5,7 +5,7 @@
 This library provides helper methods to use with [mage](https://magefile.org).
 
 Below is a sample of the type of helpers available. Full examples and
-documentation is on [godoc](godoc.org/github.com/carolynvs/magex).
+documentation is on [godoc](https://godoc.org/github.com/carolynvs/magex).
 
 ```go
 // +build mage

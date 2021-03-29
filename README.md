@@ -39,10 +39,10 @@ func StartRegistry() error {
 // Use go go to download a tool, build and install it manually so 
 // that it has version information embedded in the final binary.
 func CustomInstallTool() error {
-	err := shx.Command("go", "get", "-u", "github.com/magefile/mage")
-    if err != nil {
-    	return err
-    }
+	err := shx.RunE("go", "get", "-u", "github.com/magefile/mage")
+	if err != nil {
+    		return err
+	}
     
 	src := filepath.Join(GOPATH(), "src/github.com/magefile/mage")
 	return shx.Command("go", "run", "bootstrap.go").In(src).RunE()

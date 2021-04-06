@@ -12,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/carolynvs/magex/pkg/gopath"
+	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 	"github.com/pkg/errors"
 )
@@ -75,6 +76,7 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 	if err != nil {
 		return errors.Wrap(err, "could not create temporary directory")
 	}
+	defer os.RemoveAll(tmpDir)
 	tmpFile := filepath.Join(tmpDir, filepath.Base(src))
 
 	r, err := http.Get(src)
@@ -113,8 +115,8 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 
 	// Move it to GOPATH/bin
 	dest := filepath.Join(gopath.GetGopathBin(), opts.Name+xplat.FileExt())
-	err = os.Rename(tmpBin, dest)
-	return errors.Wrapf(err, "error moving %s to %s", src, dest)
+	err = shx.Copy(tmpBin, dest)
+	return errors.Wrapf(err, "error copying %s to %s", tmpBin, dest)
 }
 
 // RenderTemplate takes a Go templated string and expands template variables

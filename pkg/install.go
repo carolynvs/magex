@@ -1,21 +1,18 @@
 package pkg
 
 import (
-	"bytes"
 	"fmt"
-	"html/template"
-	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 
+	"github.com/carolynvs/magex/pkg/downloads"
+	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 	"github.com/pkg/errors"
@@ -70,7 +67,7 @@ func getCommandName(pkg string) string {
 // When version is specified, install that version. Otherwise install the most
 // recent code from the default branch.
 func InstallPackage(pkg string, version string) error {
-	EnsureGopathBin()
+	gopath.EnsureGopathBin()
 
 	cmd := getCommandName(pkg)
 
@@ -148,23 +145,6 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 	return versionFound, nil
 }
 
-// GetGopathBin returns GOPATH/bin.
-func GetGopathBin() string {
-	return filepath.Join(GOPATH(), "bin")
-}
-
-// EnsureGopathBin ensures that GOPATH/bin exists and is in PATH.
-// Detects if this is an Azure CI build and exports the updated PATH.
-func EnsureGopathBin() error {
-	gopathBin := GetGopathBin()
-	err := os.MkdirAll(gopathBin, 0755)
-	if err != nil {
-		errors.Wrapf(err, "could not create GOPATH/bin at %s", gopathBin)
-	}
-	xplat.EnsureInPath(GetGopathBin())
-	return nil
-}
-
 // DownloadToGopathBin downloads an executable file to GOPATH/bin.
 // src can include the following template values:
 //   - {{.GOOS}}
@@ -172,71 +152,11 @@ func EnsureGopathBin() error {
 //   - {{.EXT}}
 //   - {{.VERSION}}
 func DownloadToGopathBin(srcTemplate string, name string, version string) error {
-	src, err := renderUrlTemplate(srcTemplate, version)
-	if err != nil {
-		return err
+	opts := downloads.DownloadOptions{
+		UrlTemplate: srcTemplate,
+		Name:        name,
+		Version:     version,
+		Ext:         xplat.FileExt(),
 	}
-	log.Printf("Downloading %s to $GOPATH/bin\n", src)
-
-	err = EnsureGopathBin()
-	if err != nil {
-		return err
-	}
-
-	// Download to a temp file
-	f, err := ioutil.TempFile("", path.Base(src))
-	if err != nil {
-		return errors.Wrap(err, "could not create temp file")
-	}
-	defer f.Close()
-
-	// Make it executable
-	err = os.Chmod(f.Name(), 0755)
-	if err != nil {
-		return errors.Wrapf(err, "could not make %s executable", f.Name())
-	}
-
-	r, err := http.Get(src)
-	if err != nil {
-		return errors.Wrapf(err, "could not resolve %s", src)
-	}
-	defer r.Body.Close()
-
-	_, err = io.Copy(f, r.Body)
-	if err != nil {
-		errors.Wrapf(err, "error downloading %s", src)
-	}
-	f.Close()
-
-	// Move it to GOPATH/bin
-	dest := filepath.Join(GetGopathBin(), name+xplat.FileExt())
-	err = os.Rename(f.Name(), dest)
-	return errors.Wrapf(err, "error moving %s to %s", src, dest)
-}
-
-func renderUrlTemplate(srcTemplate string, version string) (string, error) {
-	tmpl, err := template.New("url").Parse(srcTemplate)
-	if err != nil {
-		return "", errors.Wrapf(err, "error parsing %s as a Go template", srcTemplate)
-	}
-
-	srcData := struct {
-		GOOS    string
-		GOARCH  string
-		EXT     string
-		VERSION string
-	}{
-		GOOS:    runtime.GOOS,
-		GOARCH:  runtime.GOARCH,
-		EXT:     xplat.FileExt(),
-		VERSION: version,
-	}
-
-	buf := &bytes.Buffer{}
-	err = tmpl.Execute(buf, srcData)
-	if err != nil {
-		return "", errors.Wrapf(err, "error rendering %s as a Go template with data: %#v", srcTemplate, srcData)
-	}
-
-	return buf.String(), nil
+	return downloads.DownloadToGopathBin(opts)
 }

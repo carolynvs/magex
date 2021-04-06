@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/carolynvs/magex/pkg"
+	"github.com/carolynvs/magex/pkg/gopath"
 )
 
 func ExampleEnsureMage() {
@@ -41,5 +42,5 @@ func ExampleDownloadToGopathBin() {
 
 	// Add GOPATH/bin to PATH if necessary so that we can immediately
 	// use the installed tool
-	pkg.EnsureGopathBin()
+	gopath.EnsureGopathBin()
 }

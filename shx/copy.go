@@ -28,12 +28,17 @@ func Copy(src string, dest string, opts ...CopyOption) error {
 	}
 
 	if len(items) == 0 {
-		return errors.Errorf("no such file or directory %q", src)
+		return errors.Errorf("no such file or directory '%s'", src)
 	}
 
 	var combinedOpts CopyOption
 	for _, opt := range opts {
 		combinedOpts |= opt
+	}
+
+	// Check if the destination exists, e.g. if we are copying to /tmp/foo, /tmp should already exist
+	if _, err := os.Stat(filepath.Dir(dest)); err != nil {
+		return err
 	}
 
 	for _, item := range items {
@@ -71,7 +76,7 @@ func copyFileOrDirectory(src string, dest string, opts CopyOption) error {
 		destPath := filepath.Join(dest, relPath)
 
 		if srcInfo.IsDir() {
-			return os.Mkdir(destPath, srcInfo.Mode())
+			return os.MkdirAll(destPath, srcInfo.Mode())
 		}
 
 		return copyFile(srcPath, destPath, opts)

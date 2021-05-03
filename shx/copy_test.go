@@ -27,6 +27,24 @@ func TestCopy(t *testing.T) {
 		assertFile(t, filepath.Join(tmp, "a/ab/ab2.txt"))
 	})
 
+	t.Run("recursively copy directory into populated dest dir", func(t *testing.T) {
+		tmp, err := ioutil.TempDir("", "magex")
+		require.NoError(t, err, "could not create temp directory for test")
+		defer os.RemoveAll(tmp)
+
+		require.NoError(t, os.MkdirAll(filepath.Join(tmp, "a"), 0755))
+
+		err = Copy("testdata/copy/a", tmp, CopyRecursive)
+		require.NoError(t, err, "Copy into directory with same directory name")
+
+		assert.DirExists(t, filepath.Join(tmp, "a"))
+		assertFile(t, filepath.Join(tmp, "a/a1.txt"))
+		assertFile(t, filepath.Join(tmp, "a/a2.txt"))
+		assert.DirExists(t, filepath.Join(tmp, "a/ab"))
+		assertFile(t, filepath.Join(tmp, "a/ab/ab1.txt"))
+		assertFile(t, filepath.Join(tmp, "a/ab/ab2.txt"))
+	})
+
 	t.Run("copy glob", func(t *testing.T) {
 		tmp, err := ioutil.TempDir("", "magex")
 		require.NoError(t, err, "could not create temp directory for test")

@@ -51,7 +51,7 @@ func ExtractBinaryFromArchiveHook(opts DownloadArchiveOptions) downloads.PostDow
 		opts.Ext = xplat.FileExt()
 		targetFile, err := downloads.RenderTemplate(opts.TargetFileTemplate, opts.DownloadOptions)
 		if err != nil {
-			return "", errors.Wrapf(err, "error rendering TargetFileTemplate")
+			return "", errors.Wrapf(err, "error rendering TargetFileTemplate %q with data %#v", opts.TargetFileTemplate, opts.DownloadOptions)
 		}
 
 		log.Printf("extracting %s from %s...\n", targetFile, archiveFile)

@@ -97,7 +97,7 @@ func copyFile(src string, dest string, opts CopyOption) error {
 
 	// Check if we should skip existing files
 	overwrite := opts&CopyNoOverwrite != CopyNoOverwrite
-	createOpts := os.O_CREATE | os.O_WRONLY
+	createOpts := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 	if !overwrite { // Return an error if the file exists
 		createOpts |= os.O_EXCL
 	}

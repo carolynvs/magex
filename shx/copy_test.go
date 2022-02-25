@@ -32,7 +32,8 @@ func TestCopy(t *testing.T) {
 		require.NoError(t, err, "could not create temp directory for test")
 		defer os.RemoveAll(tmp)
 
-		require.NoError(t, os.MkdirAll(filepath.Join(tmp, "a"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(tmp, "a"), 0700))
+		require.NoError(t, os.WriteFile(filepath.Join(tmp, "a/a1.txt"), []byte("a lot of extra data that should be overwritten"), 0600))
 
 		err = Copy("testdata/copy/a", tmp, CopyRecursive)
 		require.NoError(t, err, "Copy into directory with same directory name")

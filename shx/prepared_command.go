@@ -12,7 +12,6 @@ import (
 	"github.com/carolynvs/magex/mgx"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
-	"github.com/pkg/errors"
 )
 
 type PreparedCommand struct {
@@ -43,7 +42,7 @@ func (c PreparedCommand) Must(stopOnError ...bool) PreparedCommand {
 	case 1:
 		c.StopOnError = stopOnError[0]
 	default:
-		mgx.Must(errors.Errorf("More than one value for Must(stopOnError ...string) was passed to the command %s", c))
+		mgx.Must(fmt.Errorf("More than one value for Must(stopOnError ...string) was passed to the command %s", c))
 	}
 	return c
 }

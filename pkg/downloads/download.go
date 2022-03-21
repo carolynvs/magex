@@ -2,6 +2,7 @@ package downloads
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,7 +15,6 @@ import (
 	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
-	"github.com/pkg/errors"
 )
 
 // PostDownloadHook is the handler called after downloading a file, which returns the absolute path to the binary.
@@ -74,27 +74,27 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 	// Download to a temp file
 	tmpDir, err := ioutil.TempDir("", "magex")
 	if err != nil {
-		return errors.Wrap(err, "could not create temporary directory")
+		return fmt.Errorf("could not create temporary directory: %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 	tmpFile := filepath.Join(tmpDir, filepath.Base(src))
 
 	r, err := http.Get(src)
 	if err != nil {
-		return errors.Wrapf(err, "could not resolve %s", src)
+		return fmt.Errorf("could not resolve %s: %w", src, err)
 	}
 	defer r.Body.Close()
 
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
 	if err != nil {
-		return errors.Wrapf(err, "could not open %s", tmpFile)
+		return fmt.Errorf("could not open %s: %w", tmpFile, err)
 	}
 	defer f.Close()
 
 	// Download to the temp file
 	_, err = io.Copy(f, r.Body)
 	if err != nil {
-		errors.Wrapf(err, "error downloading %s", src)
+		fmt.Errorf("error downloading %s: %w", src, err)
 	}
 	f.Close()
 
@@ -110,13 +110,15 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 	// Make the binary executable
 	err = os.Chmod(tmpBin, 0755)
 	if err != nil {
-		return errors.Wrapf(err, "could not make %s executable", tmpBin)
+		return fmt.Errorf("could not make %s executable: %w", tmpBin, err)
 	}
 
 	// Move it to GOPATH/bin
 	dest := filepath.Join(gopath.GetGopathBin(), opts.Name+xplat.FileExt())
-	err = shx.Copy(tmpBin, dest)
-	return errors.Wrapf(err, "error copying %s to %s", tmpBin, dest)
+	if err := shx.Copy(tmpBin, dest); err != nil {
+		return fmt.Errorf("error copying %s to %s: %w", tmpBin, dest, err)
+	}
+	return nil
 }
 
 // RenderTemplate takes a Go templated string and expands template variables
@@ -128,7 +130,7 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 func RenderTemplate(tmplContents string, opts DownloadOptions) (string, error) {
 	tmpl, err := template.New("url").Parse(tmplContents)
 	if err != nil {
-		return "", errors.Wrapf(err, "error parsing %s as a Go template", opts.UrlTemplate)
+		return "", fmt.Errorf("error parsing %s as a Go template: %w", opts.UrlTemplate, err)
 	}
 
 	srcData := struct {
@@ -154,7 +156,7 @@ func RenderTemplate(tmplContents string, opts DownloadOptions) (string, error) {
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, srcData)
 	if err != nil {
-		return "", errors.Wrapf(err, "error rendering %s as a Go template with data: %#v", opts.UrlTemplate, srcData)
+		return "", fmt.Errorf("error rendering %s as a Go template with data: %#v: %w", opts.UrlTemplate, srcData, err)
 	}
 
 	return buf.String(), nil

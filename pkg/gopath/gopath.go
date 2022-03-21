@@ -1,6 +1,7 @@
 package gopath
 
 import (
+	"fmt"
 	"go/build"
 	"io/ioutil"
 	"os"
@@ -8,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/carolynvs/magex/xplat"
-	"github.com/pkg/errors"
 )
 
 // EnsureGopathBin ensures that GOPATH/bin exists and is in PATH.
@@ -17,7 +17,7 @@ func EnsureGopathBin() error {
 	gopathBin := GetGopathBin()
 	err := os.MkdirAll(gopathBin, 0755)
 	if err != nil {
-		errors.Wrapf(err, "could not create GOPATH/bin at %s", gopathBin)
+		return fmt.Errorf("could not create GOPATH/bin at %s: %w", gopathBin, err)
 	}
 	xplat.EnsureInPath(GetGopathBin())
 	return nil
@@ -43,7 +43,7 @@ func UseTempGopath() (error, func()) {
 	oldpath := os.Getenv("PATH")
 	tmp, err := ioutil.TempDir("", "magex")
 	if err != nil {
-		return errors.Wrap(err, "Failed to create a temp directory"), func() {}
+		return fmt.Errorf("failed to create a temp directory: %w", err), func() {}
 	}
 
 	cleanup := func() {

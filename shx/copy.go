@@ -1,11 +1,10 @@
 package shx
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 )
 
 type CopyOption int
@@ -28,7 +27,7 @@ func Copy(src string, dest string, opts ...CopyOption) error {
 	}
 
 	if len(items) == 0 {
-		return errors.Errorf("no such file or directory '%s'", src)
+		return fmt.Errorf("no such file or directory '%s'", src)
 	}
 
 	var combinedOpts CopyOption
@@ -71,7 +70,7 @@ func copyFileOrDirectory(src string, dest string, opts CopyOption) error {
 
 		relPath, err := filepath.Rel(src, srcPath)
 		if err != nil {
-			return errors.Wrapf(err, "error determining the relative path between %s and %s", src, srcPath)
+			return fmt.Errorf("error determining the relative path between %s and %s: %w", src, srcPath, err)
 		}
 		destPath := filepath.Join(dest, relPath)
 
@@ -113,7 +112,7 @@ func copyFile(src string, dest string, opts CopyOption) error {
 
 	_, err = io.Copy(destF, srcF)
 	if err != nil {
-		errors.Wrapf(err, "error copying %s to %s", src, dest)
+		fmt.Errorf("error copying %s to %s: %w", src, dest, err)
 	}
 	return destF.Close()
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
-	"github.com/pkg/errors"
 )
 
 // EnsureMage checks if mage is installed, and installs it if needed.
@@ -90,7 +89,7 @@ func InstallPackage(pkg string, version string) error {
 
 	log.Printf("Checking if %s is accessible from the PATH", cmd)
 	if found, _ := IsCommandAvailable(cmd, ""); !found {
-		return errors.Errorf("Could not install %s. Please install it manually", pkg)
+		return fmt.Errorf("could not install %s. Please install it manually", pkg)
 	}
 	return nil
 }
@@ -107,19 +106,22 @@ func InstallMage(version string) error {
 
 	tmp, err := ioutil.TempDir("", "magefile")
 	if err != nil {
-		return errors.Wrap(err, "could not create a temp directory to install mage")
+		return fmt.Errorf("could not create a temp directory to install mage: %w", err)
 	}
 	defer os.RemoveAll(tmp)
 
 	repoUrl := "https://github.com/magefile/mage.git"
 	err = shx.Command("git", "clone", tag, repoUrl).CollapseArgs().In(tmp).RunE()
 	if err != nil {
-		return errors.Wrapf(err, "could not clone %s", repoUrl)
+		return fmt.Errorf("could not clone %s: %w", repoUrl, err)
 	}
 
 	repoPath := filepath.Join(tmp, "mage")
-	err = shx.Command("go", "run", "bootstrap.go").In(repoPath).RunE()
-	return errors.Wrap(err, "could not build mage with version info")
+	if err := shx.Command("go", "run", "bootstrap.go").In(repoPath).RunE(); err != nil {
+		return fmt.Errorf("could not build mage with version info: %w", err)
+	}
+
+	return nil
 }
 
 // IsCommandAvailable determines if a command can be called based on the current PATH.
@@ -138,7 +140,7 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 	versionOutput, err := shx.OutputE(cmd, versionArgs...)
 	if err != nil {
 		versionCmd := strings.Join(append([]string{cmd}, versionArgs...), " ")
-		return false, errors.Wrapf(err, "could not determine the installed version of %s with '%s'", cmd, versionCmd)
+		return false, fmt.Errorf("could not determine the installed version of %s with '%s': %w", cmd, versionCmd, err)
 	}
 
 	versionFound := strings.Contains(versionOutput, version)

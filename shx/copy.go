@@ -112,7 +112,7 @@ func copyFile(src string, dest string, opts CopyOption) error {
 
 	_, err = io.Copy(destF, srcF)
 	if err != nil {
-		fmt.Errorf("error copying %s to %s: %w", src, dest, err)
+		return fmt.Errorf("error copying %s to %s: %w", src, dest, err)
 	}
 	return destF.Close()
 }

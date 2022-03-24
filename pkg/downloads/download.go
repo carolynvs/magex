@@ -94,7 +94,7 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 	// Download to the temp file
 	_, err = io.Copy(f, r.Body)
 	if err != nil {
-		fmt.Errorf("error downloading %s: %w", src, err)
+		return fmt.Errorf("error downloading %s: %w", src, err)
 	}
 	f.Close()
 

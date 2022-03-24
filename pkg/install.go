@@ -81,7 +81,7 @@ func InstallPackage(pkg string, version string) error {
 	}
 
 	fmt.Printf("Installing %s%s\n", cmd, moduleVersion)
-	err := shx.Command("go", "get", "-u", pkg+moduleVersion).
+	err := shx.Command("go", "install", pkg+moduleVersion).
 		Env("GO111MODULE=on").In(os.TempDir()).RunE()
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package archive
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 	"github.com/carolynvs/magex/xplat"
 	"github.com/mholt/archiver/v3"
 	_ "github.com/mholt/archiver/v3"
-	"github.com/pkg/errors"
 )
 
 // DownloadArchiveOptions are the set of options available for DownloadToGopathBin.
@@ -31,7 +31,7 @@ func DownloadToGopathBin(opts DownloadArchiveOptions) error {
 	// determine the appropriate file extension based on the OS, e.g. windows gets .zip, otherwise .tgz
 	opts.Ext = opts.ArchiveExtensions[runtime.GOOS]
 	if opts.Ext == "" {
-		return errors.Errorf("no archive file extension was specified for the current GOOS (%s)", runtime.GOOS)
+		return fmt.Errorf("no archive file extension was specified for the current GOOS (%s)", runtime.GOOS)
 	}
 
 	if opts.Hook == nil {
@@ -51,7 +51,7 @@ func ExtractBinaryFromArchiveHook(opts DownloadArchiveOptions) downloads.PostDow
 		opts.Ext = xplat.FileExt()
 		targetFile, err := downloads.RenderTemplate(opts.TargetFileTemplate, opts.DownloadOptions)
 		if err != nil {
-			return "", errors.Wrapf(err, "error rendering TargetFileTemplate %q with data %#v", opts.TargetFileTemplate, opts.DownloadOptions)
+			return "", fmt.Errorf("error rendering TargetFileTemplate %q with data %#v: %w", opts.TargetFileTemplate, opts.DownloadOptions, err)
 		}
 
 		log.Printf("extracting %s from %s...\n", targetFile, archiveFile)
@@ -59,7 +59,7 @@ func ExtractBinaryFromArchiveHook(opts DownloadArchiveOptions) downloads.PostDow
 		// Extract the binary
 		err = archiver.Extract(archiveFile, targetFile, outDir)
 		if err != nil {
-			return "", errors.Wrapf(err, "unable to unpack %s", archiveFile)
+			return "", fmt.Errorf("unable to unpack %s: %w", archiveFile, err)
 		}
 
 		// The extracted file may be nested depending on its position in the archive
@@ -67,7 +67,7 @@ func ExtractBinaryFromArchiveHook(opts DownloadArchiveOptions) downloads.PostDow
 
 		// Check that file was extracted, Extract doesn't error out if you give it a missing targetFile
 		if _, err := os.Stat(binFile); os.IsNotExist(err) {
-			return "", errors.Errorf("could not find %s in the archive", targetFile)
+			return "", fmt.Errorf("could not find %s in the archive", targetFile)
 		}
 
 		return binFile, nil

@@ -36,7 +36,7 @@ func StartRegistry() error {
     return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", "registry", "registry:2")
 }
 
-// Use go go to download a tool, build and install it manually so 
+// Use go to download a tool, build and install it manually so 
 // that it has version information embedded in the final binary.
 func CustomInstallTool() error {
 	err := shx.RunE("go", "get", "-u", "github.com/magefile/mage")

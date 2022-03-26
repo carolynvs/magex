@@ -64,24 +64,22 @@ func getCommandName(pkg string) string {
 // InstallPackage installs the latest version of a package.
 //
 // When version is specified, install that version. Otherwise install the most
-// recent code from the default branch.
+// recent version.
 func InstallPackage(pkg string, version string) error {
 	gopath.EnsureGopathBin()
 
 	cmd := getCommandName(pkg)
 
-	// Optionally install a specific version of the package
-	moduleVersion := ""
-	if version != "" {
-		if strings.HasPrefix(version, "v") {
-			moduleVersion = "@" + version
-		} else {
-			moduleVersion = "@v" + version
+	if version == "" {
+		version = "latest"
+	} else {
+		if version != "latest" && !strings.HasPrefix(version, "v") {
+			version = "v" + version
 		}
 	}
 
-	fmt.Printf("Installing %s%s\n", cmd, moduleVersion)
-	err := shx.Command("go", "install", pkg+moduleVersion).
+	fmt.Printf("Installing %s@%s\n", cmd, version)
+	err := shx.Command("go", "install", pkg+"@"+version).
 		Env("GO111MODULE=on").In(os.TempDir()).RunE()
 	if err != nil {
 		return err
@@ -132,9 +130,12 @@ func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool
 	}
 
 	// If no version is specified, report that it is installed
-	if version == "" {
+	if version == "" || version == "latest" {
 		return true, nil
 	}
+
+	// Trim the leading v prefix if present so that we are more likely to get a hit on the version
+	version = strings.TrimPrefix(version, "v")
 
 	// Get the installed version
 	versionOutput, err := shx.OutputE(cmd, versionArgs...)

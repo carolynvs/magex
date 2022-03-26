@@ -42,14 +42,30 @@ func TestGetCommandName(t *testing.T) {
 	})
 }
 
-func TestEnsurePackage_MajorVersion(t *testing.T) {
+func TestEnsurePackage(t *testing.T) {
 	os.Setenv(mg.VerboseEnv, "true")
-	err, cleanup := gopath.UseTempGopath()
-	require.NoError(t, err, "Failed to set up a temporary GOPATH")
-	defer cleanup()
+	defer os.Unsetenv(mg.VerboseEnv)
 
-	hasCmd, err := IsCommandAvailable("testpkg", "")
-	require.False(t, hasCmd)
-	err = EnsurePackage("github.com/carolynvs/testpkg/v2", "v2.0.1", "--version")
-	require.NoError(t, err)
+	testcases := []struct {
+		name    string
+		version string
+	}{
+		{name: "with prefix", version: "v2.0.1"},
+		{name: "without prefix", version: "2.0.1"},
+		{name: "no version", version: ""},
+		{name: "latest version", version: "latest"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err, cleanup := gopath.UseTempGopath()
+			require.NoError(t, err, "Failed to set up a temporary GOPATH")
+			defer cleanup()
+
+			hasCmd, err := IsCommandAvailable("testpkg", "")
+			require.False(t, hasCmd)
+			err = EnsurePackage("github.com/carolynvs/testpkg/v2", tc.version, "--version")
+			require.NoError(t, err)
+		})
+	}
 }

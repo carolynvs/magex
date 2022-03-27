@@ -38,8 +38,8 @@ func TestPreparedCommand_Run_Fail(t *testing.T) {
 		t.Fatal("expected shx.Command to fail")
 	}
 
-	wantStderr := "go run: no go files listed\n"
-	assert.Equal(t, wantStderr, gotStderr)
+	wantStderr := "no go files listed"
+	assert.Contains(t, gotStderr, wantStderr)
 }
 
 func TestPreparedCommand_Run_Verbose(t *testing.T) {
@@ -91,8 +91,8 @@ func TestPreparedCommand_RunE_Fail(t *testing.T) {
 		t.Fatal("expected the shx.Command to fail")
 	}
 
-	wantStderr := "go run: no go files listed\n"
-	assert.Equal(t, wantStderr, gotStderr)
+	wantStderr := "no go files listed"
+	assert.Contains(t, gotStderr, wantStderr)
 }
 
 func TestPreparedCommand_RunE_Verbose(t *testing.T) {
@@ -217,8 +217,8 @@ func TestPreparedCommand_Output_Fail(t *testing.T) {
 		t.Fatal("expected shx.Command to fail")
 	}
 
-	wantStderr := "go run: no go files listed\n"
-	assert.Equal(t, wantStderr, gotStderr)
+	wantStderr := "no go files listed"
+	assert.Contains(t, gotStderr, wantStderr)
 	assert.Empty(t, gotOutput)
 }
 
@@ -276,8 +276,8 @@ func TestPreparedCommand_OutputE_Fail(t *testing.T) {
 		t.Fatal("expected the shx.Command to fail")
 	}
 
-	wantStderr := "go run: no go files listed\n"
-	assert.Equal(t, wantStderr, gotStderr)
+	wantStderr := "no go files listed"
+	assert.Contains(t, gotStderr, wantStderr)
 	assert.Empty(t, gotOutput)
 }
 

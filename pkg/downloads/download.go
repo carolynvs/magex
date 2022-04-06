@@ -84,6 +84,9 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 		return fmt.Errorf("could not resolve %s: %w", src, err)
 	}
 	defer r.Body.Close()
+	if r.StatusCode >= 400 {
+		return fmt.Errorf("error downloading %s (%d): %s", src, r.StatusCode, r.Status)
+	}
 
 	f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
 	if err != nil {

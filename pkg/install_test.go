@@ -17,8 +17,8 @@ func TestDownloadToGopathBin(t *testing.T) {
 	require.NoError(t, err, "Failed to set up a temporary GOPATH")
 	defer cleanup()
 
-	url := "https://storage.googleapis.com/kubernetes-release/release/{{.VERSION}}/bin/{{.GOOS}}/{{.GOARCH}}/kubectl{{.EXT}}"
-	err = DownloadToGopathBin(url, "kubectl", "v1.19.0")
+	url := "https://dl.k8s.io/release/{{.VERSION}}/bin/{{.GOOS}}/{{.GOARCH}}/kubectl{{.EXT}}"
+	err = DownloadToGopathBin(url, "kubectl", "v1.23.0")
 	require.NoError(t, err)
 
 	_, err = exec.LookPath("kubectl" + xplat.FileExt())

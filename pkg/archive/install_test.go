@@ -13,7 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDownloadArchiveToGopathBin(t *testing.T) {
+func TestDownloadArchiveToGopathBin_OsReplacement(t *testing.T) {
+	if runtime.GOARCH != "amd64" {
+		t.Skipf("skipping test since gh only has binaries for amd64")
+	}
+
 	os.Setenv(mg.VerboseEnv, "true")
 	err, cleanup := gopath.UseTempGopath()
 	require.NoError(t, err, "Failed to set up a temporary GOPATH")
@@ -46,5 +50,32 @@ func TestDownloadArchiveToGopathBin(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = exec.LookPath("gh" + xplat.FileExt())
+	require.NoError(t, err)
+}
+
+func TestDownloadArchiveToGopathBin(t *testing.T) {
+	os.Setenv(mg.VerboseEnv, "true")
+	err, cleanup := gopath.UseTempGopath()
+	require.NoError(t, err, "Failed to set up a temporary GOPATH")
+	defer cleanup()
+
+	opts := DownloadArchiveOptions{
+		DownloadOptions: downloads.DownloadOptions{
+			UrlTemplate: "https://get.helm.sh/helm-v{{.VERSION}}-{{.GOOS}}-{{.GOARCH}}{{.EXT}}",
+			Name:        "helm",
+			Version:     "3.8.1",
+		},
+		ArchiveExtensions: map[string]string{
+			"linux":   ".tar.gz",
+			"darwin":  ".tar.gz",
+			"windows": ".zip",
+		},
+		TargetFileTemplate: "{{.GOOS}}-{{.GOARCH}}/helm{{.EXT}}",
+	}
+
+	err = DownloadToGopathBin(opts)
+	require.NoError(t, err)
+
+	_, err = exec.LookPath("helm" + xplat.FileExt())
 	require.NoError(t, err)
 }

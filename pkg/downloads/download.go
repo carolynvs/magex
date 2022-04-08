@@ -20,7 +20,7 @@ import (
 // PostDownloadHook is the handler called after downloading a file, which returns the absolute path to the binary.
 type PostDownloadHook func(archivePath string) (string, error)
 
-// DownloadOptions
+// DownloadOptions is the configuration settings used to download a file.
 type DownloadOptions struct {
 	// UrlTemplate is the Go template for the URL to download. Required.
 	// Available Template Variables:
@@ -60,16 +60,20 @@ type DownloadOptions struct {
 // - {{.EXT}}
 // - {{.VERSION}}
 func DownloadToGopathBin(opts DownloadOptions) error {
+
+	if err := gopath.EnsureGopathBin(); err != nil {
+		return err
+	}
+	bin := gopath.GetGopathBin()
+	return Download(bin, opts)
+}
+
+func Download(destDir string, opts DownloadOptions) error {
 	src, err := RenderTemplate(opts.UrlTemplate, opts)
 	if err != nil {
 		return err
 	}
 	log.Printf("Downloading %s...", src)
-
-	err = gopath.EnsureGopathBin()
-	if err != nil {
-		return err
-	}
 
 	// Download to a temp file
 	tmpDir, err := ioutil.TempDir("", "magex")
@@ -116,10 +120,10 @@ func DownloadToGopathBin(opts DownloadOptions) error {
 		return fmt.Errorf("could not make %s executable: %w", tmpBin, err)
 	}
 
-	// Move it to GOPATH/bin
-	dest := filepath.Join(gopath.GetGopathBin(), opts.Name+xplat.FileExt())
-	if err := shx.Copy(tmpBin, dest); err != nil {
-		return fmt.Errorf("error copying %s to %s: %w", tmpBin, dest, err)
+	// Move it to the destination
+	destPath := filepath.Join(destDir, opts.Name+xplat.FileExt())
+	if err := shx.Copy(tmpBin, destPath); err != nil {
+		return fmt.Errorf("error copying %s to %s: %w", tmpBin, destPath, err)
 	}
 	return nil
 }

@@ -2,10 +2,15 @@ package pkg_test
 
 import (
 	"log"
+	"testing"
 
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/pkg/gopath"
 )
+
+func TestExampleEnsureMage(t *testing.T) {
+	ExampleEnsureMage()
+}
 
 func ExampleEnsureMage() {
 	// Leave the version parameter blank to only check if it is installed, and
@@ -16,21 +21,46 @@ func ExampleEnsureMage() {
 	}
 }
 
+func TestExampleEnsurePackage(t *testing.T) {
+	ExampleEnsurePackage()
+}
+
 func ExampleEnsurePackage() {
 	// Install packr2@v2.8.0 using the command `packr2 version` to detect if the
 	// correct version is installed.
-	err := pkg.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0", "version")
+	err := pkg.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.3", "version")
 	if err != nil {
 		log.Fatal("could not install packr2")
 	}
 }
 
-func ExampleInstallPackage() {
-	// Install packr2@v2.8.0
-	err := pkg.InstallPackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0")
+func TestExampleEnsurePackage_WithVersionConstraint(t *testing.T) {
+	ExampleEnsurePackage_WithVersionConstraint()
+}
+
+func ExampleEnsurePackage_WithVersionConstraint() {
+	// Install packr2@v2.8.0 using the command `packr2 version` to detect if
+	// any v2 version is installed
+	err := pkg.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.3", "version", "2.x")
 	if err != nil {
 		log.Fatal("could not install packr2")
 	}
+}
+
+func TestExampleInstallPackage(t *testing.T) {
+	ExampleInstallPackage()
+}
+
+func ExampleInstallPackage() {
+	// Install packr2@v2.8.3
+	err := pkg.InstallPackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.3")
+	if err != nil {
+		log.Fatal("could not install packr2")
+	}
+}
+
+func TestExampleDownloadToGopathBin(t *testing.T) {
+	ExampleDownloadToGopathBin()
 }
 
 func ExampleDownloadToGopathBin() {

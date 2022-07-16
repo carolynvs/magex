@@ -10,8 +10,8 @@ import (
 type CopyOption int
 
 const (
-	// CopyNoOverwrite does not overwrite existing files in the destination
 	CopyDefault CopyOption = iota
+	// CopyNoOverwrite does not overwrite existing files in the destination
 	CopyNoOverwrite
 	CopyRecursive
 )

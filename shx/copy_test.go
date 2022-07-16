@@ -183,6 +183,8 @@ func TestCopy_CopyNoOverwrite(t *testing.T) {
 }
 
 func assertFile(t *testing.T, f string) {
+	t.Helper()
+
 	gotContents, err := ioutil.ReadFile(f)
 	require.NoErrorf(t, err, "could not read file %s", f)
 

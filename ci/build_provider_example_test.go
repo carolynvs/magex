@@ -2,9 +2,14 @@ package ci_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/carolynvs/magex/ci"
 )
+
+func TestExampleDetectBuildProvider(t *testing.T) {
+	ExampleDetectBuildProvider()
+}
 
 func ExampleDetectBuildProvider() {
 	// Figure out if you are on a build provider that is supported

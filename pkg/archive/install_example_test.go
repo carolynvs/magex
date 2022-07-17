@@ -2,11 +2,16 @@ package archive_test
 
 import (
 	"log"
+	"testing"
 
 	"github.com/carolynvs/magex/pkg/archive"
 	"github.com/carolynvs/magex/pkg/downloads"
 	"github.com/carolynvs/magex/pkg/gopath"
 )
+
+func TestExampleDownloadToGopathBin(t *testing.T) {
+	ExampleDownloadToGopathBin()
+}
 
 func ExampleDownloadToGopathBin() {
 	opts := archive.DownloadArchiveOptions{

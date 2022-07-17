@@ -3,7 +3,6 @@ package pkg
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -11,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/carolynvs/magex/pkg/downloads"
 	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
@@ -19,38 +19,68 @@ import (
 
 // EnsureMage checks if mage is installed, and installs it if needed.
 //
-// When version is specified, detect if the specified version is installed, and
-// if not, install that specific version of mage. Otherwise install the most
+// When version is specified, detect if a compatible version is installed, and
+// if not, install that specific version of mage. Otherwise, install the most
 // recent code from the main branch.
-func EnsureMage(version string) error {
-	found, err := IsCommandAvailable("mage", version, "-version")
+func EnsureMage(defaultVersion string) error {
+	versionConstraint := makeDefaultVersionConstraint(defaultVersion)
+	found, err := IsCommandAvailable("mage", "-version", versionConstraint)
 	if err != nil {
 		return err
 	}
 
 	if !found {
-		return InstallMage(version)
+		return InstallMage(defaultVersion)
 	}
 	return nil
 }
 
 // EnsurePackage checks if the package is installed and installs it if needed.
+// Optionally accepts the argument or flag to pass to the command to check the
+// installed version, and a semver range to use to validate the installed
+// version, such as ^1.2.3 or 2.x. When no version arguments are supplied, any
+// installed version is acceptable.
 //
-// When version is specified, detect if the specified version is installed, and
-// if not, install the package at that version. Otherwise install the most
-// recent code from the main branch.
-func EnsurePackage(pkg string, version string, versionArgs ...string) error {
+// When defaultVersion is specified, and a version constraint is not, the default
+// is used as the minimum version and sets the allowed major version. For example,
+// a defaultVersion of 1.2.3 would result in a constraint of ^1.2.3.
+// When no defaultVersion is specified, the latest version is installed.
+func EnsurePackage(pkg string, defaultVersion string, versionArgs ...string) error {
 	cmd := getCommandName(pkg)
 
-	found, err := IsCommandAvailable(cmd, version, versionArgs...)
+	// Apply optional arguments: versionCmd, versionConstraint
+	versionCmd := ""
+	versionConstraint := ""
+	if len(versionArgs) > 0 {
+		versionCmd = versionArgs[0]
+		if len(versionArgs) > 1 {
+			versionConstraint = versionArgs[1]
+		}
+	}
+
+	// Default the constraint to [defaultVersion - next major)
+	if versionConstraint == "" {
+		versionConstraint = makeDefaultVersionConstraint(defaultVersion)
+	}
+
+	found, err := IsCommandAvailable(cmd, versionCmd, versionConstraint)
 	if err != nil {
 		return err
 	}
 
 	if !found {
-		return InstallPackage(pkg, version)
+		return InstallPackage(pkg, defaultVersion)
 	}
 	return nil
+}
+
+// create a semver constraint of ^defaultVersion, otherwise use no constraint
+func makeDefaultVersionConstraint(defaultVersion string) string {
+	defaultVersion = strings.TrimPrefix(defaultVersion, "v")
+	if v, err := semver.NewVersion(defaultVersion); err == nil {
+		return fmt.Sprintf("^%s", v.String())
+	}
+	return ""
 }
 
 func getCommandName(pkg string) string {
@@ -79,17 +109,8 @@ func InstallPackage(pkg string, version string) error {
 	}
 
 	fmt.Printf("Installing %s@%s\n", cmd, version)
-	err := shx.Command("go", "install", pkg+"@"+version).
+	return shx.Command("go", "install", pkg+"@"+version).
 		Env("GO111MODULE=on").In(os.TempDir()).RunE()
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Checking if %s is accessible from the PATH", cmd)
-	if found, _ := IsCommandAvailable(cmd, ""); !found {
-		return fmt.Errorf("could not install %s. Please install it manually", pkg)
-	}
-	return nil
 }
 
 // InstallMage mage into GOPATH and add GOPATH/bin to PATH if necessary.
@@ -123,29 +144,68 @@ func InstallMage(version string) error {
 }
 
 // IsCommandAvailable determines if a command can be called based on the current PATH.
-func IsCommandAvailable(cmd string, version string, versionArgs ...string) (bool, error) {
-	_, err := exec.LookPath(cmd)
+func IsCommandAvailable(cmd string, versionCmd string, versionConstraint string) (bool, error) {
+	cmd, err := exec.LookPath(cmd)
 	if err != nil {
 		return false, nil
 	}
 
-	// If no version is specified, report that it is installed
-	if version == "" || version == "latest" {
+	return CheckCommandVersion(cmd, versionCmd, versionConstraint)
+}
+
+// CheckCommandVersion determines if the specified command is available and
+// if specified, that the version command returned a version that matches the semver constraint.
+// For example, 1.x or ~2.3. See https://github.com/Masterminds/semver for details
+// on how to specify a version constrain.
+func CheckCommandVersion(cmd string, versionCmd string, versionConstraint string) (bool, error) {
+	// Get the installed version
+	scrapedVersion, err := GetCommandVersion(cmd, versionCmd)
+	if err != nil {
+		return false, err
+	}
+
+	// Parse the version from the command output as a semantic version
+	ver, err := semver.NewVersion(scrapedVersion)
+	if err != nil {
 		return true, nil
 	}
 
-	// Trim the leading v prefix if present so that we are more likely to get a hit on the version
-	version = strings.TrimPrefix(version, "v")
-
-	// Get the installed version
-	versionOutput, err := shx.OutputE(cmd, versionArgs...)
+	// Try to use the version constraint, ignore it if it's not a valid semver constraint
+	// such as "" or "latest" or a tag/branch
+	constraint, err := semver.NewConstraint(versionConstraint)
 	if err != nil {
-		versionCmd := strings.Join(append([]string{cmd}, versionArgs...), " ")
-		return false, fmt.Errorf("could not determine the installed version of %s with '%s': %w", cmd, versionCmd, err)
+		return true, nil
 	}
 
-	versionFound := strings.Contains(versionOutput, version)
-	return versionFound, nil
+	return constraint.Check(ver), nil
+}
+
+// This is the same regex that masterminds/semver uses
+const semVerRegex string = `v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?` +
+	`(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?` +
+	`(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
+
+// GetCommandVersion executes the specified command to get its version
+// The result is the contents of standard output of calling the command, and
+// probably includes additional text besides the version number.
+func GetCommandVersion(cmd string, versionCmd string) (string, error) {
+	prettyCmd := cmd
+	if versionCmd != "" {
+		prettyCmd = fmt.Sprintf("%s %s", cmd, versionCmd)
+	}
+
+	// Get the installed version
+	versionOutput, err := shx.Command(cmd, versionCmd).CollapseArgs().OutputE()
+	if err != nil {
+		return "", fmt.Errorf("could not determine the installed version of %s with '%s': %w", cmd, prettyCmd, err)
+	}
+
+	cmdRegex := regexp.MustCompile(semVerRegex)
+	matches := cmdRegex.FindStringSubmatch(versionOutput)
+	if len(matches) == 0 {
+		return "", fmt.Errorf("the output of %s did not include a 3-part semver value: %s", prettyCmd, versionOutput)
+	}
+	return matches[0], nil
 }
 
 // DownloadToGopathBin downloads an executable file to GOPATH/bin.

@@ -1,6 +1,8 @@
 package shx_test
 
-import "github.com/carolynvs/magex/shx"
+import (
+	"github.com/carolynvs/magex/shx"
+)
 
 func ExampleCopy() {
 	// Copy a file from the current directory into TEMP

@@ -42,18 +42,20 @@ func TestGetCommandName(t *testing.T) {
 	})
 }
 
-func TestEnsurePackage(t *testing.T) {
+func TestEnsurePackage_FreshInstall(t *testing.T) {
 	os.Setenv(mg.VerboseEnv, "true")
 	defer os.Unsetenv(mg.VerboseEnv)
 
 	testcases := []struct {
-		name    string
-		version string
+		name              string
+		versionConstraint string
+		defaultVersion    string
+		wantVersion       string
 	}{
-		{name: "with prefix", version: "v2.0.1"},
-		{name: "without prefix", version: "2.0.1"},
-		{name: "no version", version: ""},
-		{name: "latest version", version: "latest"},
+		{name: "with prefix", versionConstraint: "v2.0.x", defaultVersion: "v2.0.2", wantVersion: "v2.0.2"},
+		{name: "without prefix", versionConstraint: "2.0.x", defaultVersion: "2.0.2", wantVersion: "v2.0.2"},
+		{name: "no version", versionConstraint: "", wantVersion: "v2.0.3"},
+		{name: "latest version", versionConstraint: "latest", wantVersion: "v2.0.3"},
 	}
 
 	for _, tc := range testcases {
@@ -62,10 +64,51 @@ func TestEnsurePackage(t *testing.T) {
 			require.NoError(t, err, "Failed to set up a temporary GOPATH")
 			defer cleanup()
 
-			hasCmd, err := IsCommandAvailable("testpkg", "")
+			// Verify it's not currently installed
+			hasCmd, err := IsCommandAvailable("testpkg", "", "")
 			require.False(t, hasCmd)
-			err = EnsurePackage("github.com/carolynvs/testpkg/v2", tc.version, "--version")
+
+			err = EnsurePackage("github.com/carolynvs/testpkg/v2", tc.defaultVersion, "--version", tc.versionConstraint)
 			require.NoError(t, err)
+
+			installedVersion, err := GetCommandVersion("testpkg", "")
+			require.Equal(t, tc.wantVersion, installedVersion, "incorrect version was resolved")
+		})
+	}
+}
+
+func TestEnsurePackage_Upgrade(t *testing.T) {
+	os.Setenv(mg.VerboseEnv, "true")
+	defer os.Unsetenv(mg.VerboseEnv)
+
+	testcases := []struct {
+		name              string
+		versionConstraint string
+		defaultVersion    string
+		wantVersion       string
+	}{
+		{name: "constraint allows existing version", versionConstraint: "v2.0.x", defaultVersion: "v2.0.2", wantVersion: "v2.0.2"},
+		{name: "constraint requires higher version", versionConstraint: "^2.0.3", defaultVersion: "2.0.3", wantVersion: "v2.0.3"},
+		{name: "no version constraint", versionConstraint: "", defaultVersion: "", wantVersion: "v2.0.2"},
+		{name: "latest version", defaultVersion: "latest", wantVersion: "v2.0.2"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err, cleanup := gopath.UseTempGopath()
+			require.NoError(t, err, "Failed to set up a temporary GOPATH")
+			defer cleanup()
+
+			// Install an old version
+			err = InstallPackage("github.com/carolynvs/testpkg/v2", "v2.0.2")
+			require.NoError(t, err)
+
+			// Ensure it's installed with a higher default version
+			err = EnsurePackage("github.com/carolynvs/testpkg/v2", tc.defaultVersion, "--version", tc.versionConstraint)
+			require.NoError(t, err)
+
+			installedVersion, err := GetCommandVersion("testpkg", "")
+			require.Equal(t, tc.wantVersion, installedVersion, "incorrect version was resolved")
 		})
 	}
 }

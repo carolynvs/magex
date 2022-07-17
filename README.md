@@ -17,9 +17,16 @@ import (
 	"github.com/carolynvs/magex/shx"
 )
 
-// Install packr2 v2.8.0 if it's not available, and ensure it's in PATH.
+// Check if packr2 is in the bin/ directory and is at least v2.
+// If not, install packr@v2.8.0 into bin/
 func EnsurePackr2() error {
-   return pkg.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.0", "version")
+	opts := pkg.EnsurePackageOptions{
+		Name: "github.com/gobuffalo/packr/v2/packr2",
+		DefaultVersion: "v2.8.0",
+		VersionCommand: "version",
+		Destination: "bin",
+    }
+   return pkg.EnsurePackageWith(opts)
 }
 
 // Install mage if it's not available, and ensure it's in PATH. We don't care which version

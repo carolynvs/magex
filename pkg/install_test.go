@@ -3,6 +3,7 @@ package pkg
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/carolynvs/magex/pkg/gopath"
@@ -68,13 +69,50 @@ func TestEnsurePackage_FreshInstall(t *testing.T) {
 			hasCmd, err := IsCommandAvailable("testpkg", "", "")
 			require.False(t, hasCmd)
 
-			err = EnsurePackage("github.com/carolynvs/testpkg/v2", tc.defaultVersion, "--version", tc.versionConstraint)
+			opts := EnsurePackageOptions{
+				Name:           "github.com/carolynvs/testpkg/v2",
+				DefaultVersion: tc.defaultVersion,
+				AllowedVersion: tc.versionConstraint,
+				VersionCommand: "--version",
+			}
+			err = EnsurePackageWith(opts)
 			require.NoError(t, err)
 
 			installedVersion, err := GetCommandVersion("testpkg", "")
+			require.NoError(t, err, "GetCommandVersion failed")
 			require.Equal(t, tc.wantVersion, installedVersion, "incorrect version was resolved")
 		})
 	}
+}
+
+func TestEnsurePackage_IntoDirectory(t *testing.T) {
+	os.Setenv(mg.VerboseEnv, "true")
+	defer os.Unsetenv(mg.VerboseEnv)
+
+	// Make a temp GOPATH to avoid accidentally messing with the system GOPATH/bin if the test fails
+	err, cleanup := gopath.UseTempGopath()
+	require.NoError(t, err, "Failed to set up a temporary GOPATH")
+	defer cleanup()
+
+	tmpBin, err := os.MkdirTemp("", "magex")
+	require.NoError(t, err, "Failed to create temporary bin directory")
+	defer os.RemoveAll(tmpBin)
+
+	opts := EnsurePackageOptions{
+		Name:           "github.com/carolynvs/testpkg/v2",
+		DefaultVersion: "v2.0.2",
+		Destination:    tmpBin,
+	}
+	err = EnsurePackageWith(opts)
+	require.NoError(t, err)
+
+	cmdPath := filepath.Join(tmpBin, "testpkg"+xplat.FileExt())
+	require.FileExists(t, cmdPath, "The command was not installed into the bin directory")
+
+	installedVersion, err := GetCommandVersion(cmdPath, "")
+	require.NoError(t, err, "GetCommandVersion failed")
+	require.Equal(t, opts.DefaultVersion, installedVersion, "incorrect version was installed")
+
 }
 
 func TestEnsurePackage_Upgrade(t *testing.T) {
@@ -104,10 +142,17 @@ func TestEnsurePackage_Upgrade(t *testing.T) {
 			require.NoError(t, err)
 
 			// Ensure it's installed with a higher default version
-			err = EnsurePackage("github.com/carolynvs/testpkg/v2", tc.defaultVersion, "--version", tc.versionConstraint)
+			opts := EnsurePackageOptions{
+				Name:           "github.com/carolynvs/testpkg/v2",
+				DefaultVersion: tc.defaultVersion,
+				AllowedVersion: tc.versionConstraint,
+				VersionCommand: "--version",
+			}
+			err = EnsurePackageWith(opts)
 			require.NoError(t, err)
 
 			installedVersion, err := GetCommandVersion("testpkg", "")
+			require.NoError(t, err, "GetCommandVersion failed")
 			require.Equal(t, tc.wantVersion, installedVersion, "incorrect version was resolved")
 		})
 	}

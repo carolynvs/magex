@@ -2,7 +2,10 @@ package pkg_test
 
 import (
 	"log"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/pkg/gopath"
@@ -26,7 +29,7 @@ func TestExampleEnsurePackage(t *testing.T) {
 }
 
 func ExampleEnsurePackage() {
-	// Install packr2@v2.8.0 using the command `packr2 version` to detect if the
+	// Install packr2@v2.8.3 using the command `packr2 version` to detect if the
 	// correct version is installed.
 	err := pkg.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.3", "version")
 	if err != nil {
@@ -34,14 +37,68 @@ func ExampleEnsurePackage() {
 	}
 }
 
-func TestExampleEnsurePackage_WithVersionConstraint(t *testing.T) {
-	ExampleEnsurePackage_WithVersionConstraint()
+func TestExampleEnsurePackageWith_LatestVersion(t *testing.T) {
+	ExampleEnsurePackageWith_LatestVersion()
 }
 
-func ExampleEnsurePackage_WithVersionConstraint() {
-	// Install packr2@v2.8.0 using the command `packr2 version` to detect if
+func ExampleEnsurePackageWith_LatestVersion() {
+	// Install packr2@latest into bin/ using the command `packr2 version` to detect if the
+	// correct version is installed.
+	err := pkg.EnsurePackageWith(pkg.EnsurePackageOptions{
+		Name:           "github.com/gobuffalo/packr/v2/packr2",
+		VersionCommand: "version",
+		Destination:    "bin",
+	})
+	if err != nil {
+		log.Fatal("could not install packr2")
+	}
+}
+
+func TestExampleEnsurePackageWith_DefaultVersion(t *testing.T) {
+	ExampleEnsurePackageWith_DefaultVersion()
+}
+
+func ExampleEnsurePackageWith_DefaultVersion() {
+	// Install packr2@v2.8.3 into bin/ using the command `packr2 version` to detect if the
+	// correct version is installed.
+	err := pkg.EnsurePackageWith(pkg.EnsurePackageOptions{
+		Name:           "github.com/gobuffalo/packr/v2/packr2",
+		DefaultVersion: "v2.8.3",
+		VersionCommand: "version",
+		Destination:    "bin",
+	})
+	if err != nil {
+		log.Fatal("could not install packr2")
+	}
+}
+
+func TestExampleEnsurePackage_VersionConstraint(t *testing.T) {
+	ExampleEnsurePackage_VersionConstraint()
+}
+
+func ExampleEnsurePackage_VersionConstraint() {
+	// Install packr2@v2.8.3 using the command `packr2 version` to detect if
 	// any v2 version is installed
 	err := pkg.EnsurePackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.3", "version", "2.x")
+	if err != nil {
+		log.Fatal("could not install packr2")
+	}
+}
+
+func TestExampleEnsurePackageWith_VersionConstraint(t *testing.T) {
+	ExampleEnsurePackageWith_VersionConstraint()
+}
+
+func ExampleEnsurePackageWith_VersionConstraint() {
+	// Install packr2@v2.8.3 into bin/ using the command `packr2 version` to detect if
+	// any v2 version is installed
+	err := pkg.EnsurePackageWith(pkg.EnsurePackageOptions{
+		Name:           "github.com/gobuffalo/packr/v2/packr2",
+		DefaultVersion: "v2.8.3",
+		VersionCommand: "version",
+		Destination:    "bin",
+		AllowedVersion: "2.x",
+	})
 	if err != nil {
 		log.Fatal("could not install packr2")
 	}
@@ -56,6 +113,27 @@ func ExampleInstallPackage() {
 	err := pkg.InstallPackage("github.com/gobuffalo/packr/v2/packr2", "v2.8.3")
 	if err != nil {
 		log.Fatal("could not install packr2")
+	}
+}
+
+func TestExampleInstallPackageWith(t *testing.T) {
+	tmpBin, err := os.MkdirTemp("", "magex")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpBin)
+
+	ExampleInstallPackageWith()
+}
+
+func ExampleInstallPackageWith() {
+	// Install packr2@v2.8.3 into the bin/ directory
+	opts := pkg.InstallPackageOptions{
+		Name:        "github.com/gobuffalo/packr/v2/packr2",
+		Destination: "bin",
+		Version:     "v2.8.3",
+	}
+	err := pkg.InstallPackageWith(opts)
+	if err != nil {
+		log.Fatal("could not install packr2@v2.8.3 into bin")
 	}
 }
 

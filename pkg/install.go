@@ -10,9 +10,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/carolynvs/magex/pkg/gopath"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/carolynvs/magex/pkg/downloads"
-	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 )
@@ -45,31 +46,77 @@ func EnsureMage(defaultVersion string) error {
 // is used as the minimum version and sets the allowed major version. For example,
 // a defaultVersion of 1.2.3 would result in a constraint of ^1.2.3.
 // When no defaultVersion is specified, the latest version is installed.
+//
+// Deprecated: Use EnsurePackageWith.
 func EnsurePackage(pkg string, defaultVersion string, versionArgs ...string) error {
-	cmd := getCommandName(pkg)
+	var versionCmd, allowedVersion string
 
-	// Apply optional arguments: versionCmd, versionConstraint
-	versionCmd := ""
-	versionConstraint := ""
 	if len(versionArgs) > 0 {
 		versionCmd = versionArgs[0]
 		if len(versionArgs) > 1 {
-			versionConstraint = versionArgs[1]
+			allowedVersion = versionArgs[1]
 		}
 	}
 
+	return EnsurePackageWith(EnsurePackageOptions{
+		Name:           pkg,
+		DefaultVersion: defaultVersion,
+		AllowedVersion: allowedVersion,
+		VersionCommand: versionCmd,
+	})
+}
+
+// EnsurePackageOptions are the set of options that can be passed to EnsurePackageWith.
+type EnsurePackageOptions struct {
+	// Name of the Go package
+	// Provide the name of the package that should be compiled into a cli,
+	// such as github.com/gobuffalo/packr/v2/packr2
+	Name string
+
+	// DefaultVersion is the version to install, if not found. When specified, and
+	// AllowedVersion is not, DefaultVersion is used as the minimum version and sets
+	// the allowed major version. For example, a DefaultVersion of 1.2.3 would result
+	// in an AllowedVersion of ^1.2.3. When no DefaultVersion is specified, the
+	// latest version is installed.
+	DefaultVersion string
+
+	// AllowedVersion is a semver range that specifies which versions are acceptable
+	// if found. For example, ^1.2.3 or 2.x. When unspecified, any installed version
+	// is acceptable. See https://github.com/Masterminds/semver for further
+	// documentation.
+	AllowedVersion string
+
+	// Destination is the location where the CLI should be installed
+	// Defaults to GOPATH/bin. Using ./bin is recommended to require build tools
+	// without modifying the host environment.
+	Destination string
+
+	// VersionCommand is the arguments to pass to the CLI to determine the installed version.
+	// For example, "version" or "--version". When unspecified the CLI is called without any arguments.
+	VersionCommand string
+}
+
+// EnsurePackageWith checks if the package is installed and installs it if needed.
+func EnsurePackageWith(opts EnsurePackageOptions) error {
+	cmd := getCommandName(opts.Name)
+
 	// Default the constraint to [defaultVersion - next major)
-	if versionConstraint == "" {
-		versionConstraint = makeDefaultVersionConstraint(defaultVersion)
+	if opts.AllowedVersion == "" {
+		opts.AllowedVersion = makeDefaultVersionConstraint(opts.DefaultVersion)
 	}
 
-	found, err := IsCommandAvailable(cmd, versionCmd, versionConstraint)
+	found, err := IsCommandAvailable(cmd, opts.VersionCommand, opts.AllowedVersion)
 	if err != nil {
 		return err
 	}
 
 	if !found {
-		return InstallPackage(pkg, defaultVersion)
+		installOpts := InstallPackageOptions{
+			Name:        opts.Name,
+			Destination: opts.Destination,
+			Version:     opts.DefaultVersion,
+		}
+		return InstallPackageWith(installOpts)
 	}
 	return nil
 }
@@ -91,26 +138,61 @@ func getCommandName(pkg string) string {
 	return name
 }
 
+// InstallPackageOptions are the set of options that can be passed to InstallPackageWith.
+type InstallPackageOptions struct {
+	// Name of the Go package
+	// Provide the name of the package that should be compiled into a cli,
+	// such as github.com/gobuffalo/packr/v2/packr2
+	Name string
+
+	// Destination is the location where the CLI should be installed
+	// Defaults to GOPATH/bin. Using ./bin is recommended to require build tools
+	// without modifying the host environment.
+	Destination string
+
+	// Version of the package to install.
+	Version string
+}
+
 // InstallPackage installs the latest version of a package.
 //
-// When version is specified, install that version. Otherwise install the most
+// When version is specified, install that version. Otherwise, install the most
 // recent version.
+// Deprecated: Use InstallPackageWith instead.
 func InstallPackage(pkg string, version string) error {
-	gopath.EnsureGopathBin()
+	opts := InstallPackageOptions{
+		Name:    pkg,
+		Version: version,
+	}
+	return InstallPackageWith(opts)
+}
 
-	cmd := getCommandName(pkg)
+// InstallPackageWith unconditionally installs a package
+func InstallPackageWith(opts InstallPackageOptions) error {
+	cmd := getCommandName(opts.Name)
 
-	if version == "" {
-		version = "latest"
+	if opts.Version == "" {
+		opts.Version = "latest"
 	} else {
-		if version != "latest" && !strings.HasPrefix(version, "v") {
-			version = "v" + version
+		if opts.Version != "latest" && !strings.HasPrefix(opts.Version, "v") {
+			opts.Version = "v" + opts.Version
 		}
 	}
 
-	fmt.Printf("Installing %s@%s\n", cmd, version)
-	return shx.Command("go", "install", pkg+"@"+version).
-		Env("GO111MODULE=on").In(os.TempDir()).RunE()
+	installCmd := shx.Command("go", "install", opts.Name+"@"+opts.Version).
+		Env("GO111MODULE=on").In(os.TempDir())
+	if opts.Destination == "" {
+		gopath.EnsureGopathBin()
+		fmt.Printf("Installing %s@%s into GOPATH/bin\n", cmd, opts.Version)
+	} else {
+		dest, err := filepath.Abs(opts.Destination)
+		if err != nil {
+			return fmt.Errorf("error converting %s to an absolute path", opts.Destination)
+		}
+		installCmd.Env("GOBIN=" + dest)
+		fmt.Printf("Installing %s@%s into %s\n", cmd, opts.Version, dest)
+	}
+	return installCmd.RunE()
 }
 
 // InstallMage mage into GOPATH and add GOPATH/bin to PATH if necessary.

@@ -8,7 +8,7 @@ import (
 
 func ExampleRun() {
 	// Only write to stdout when mage -v is set
-	err := shx.RunS("go", "run", "echo.go", "hello world")
+	err := shx.Run("go", "run", "echo.go", "hello world")
 	if err != nil {
 		log.Fatal(err)
 	}
